@@ -1,22 +1,23 @@
 #-*-coding: utf8-*-
-
+import sys
+from copy import deepcopy
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
     Toutes ces méthodes sont à compléter en vous basant sur la documentation fournie en docstring.
     """
-    grid:list=[
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    grid = [
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
  
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
 
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0, 0],
- ]
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+    ]
     @classmethod
     def from_file(cls, filename, line):
         """À COMPLÉTER!
@@ -32,9 +33,17 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée dans le fichier donné
         :rtype: SudokuGrid
         """
+        #with open(filename, 'r') as f:
+        #    line_str = list(f.readlines()[line].rstrip("\n"))
+        #f.close() #pas utilisé ici
+        line_f=None
         with open(filename, 'r') as f:
-            return cls(list(f.readlines()[line])
-#        raise NotImplementedError()
+            l_n = 0
+            while l_n < line:
+                f.readline()
+                l_n+=1
+            line_f = f.readline().rstrip()
+        return cls(line_f)
 
     @classmethod
     def from_stdin(cls):
@@ -45,10 +54,11 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée par l'utilisateur
         :rtype: SudokuGrid
         """
+        return cls(input())
         raise NotImplementedError()
 
     def __init__(self, initial_values_str):
-        """À COMPLÉTER!
+        """
         Ce constructeur initialise une nouvelle instance de la classe SudokuGrid.
         Il doit effectuer la conversation de chaque caractère de la chaîne en nombre entier,
         et lever une exception si elle ne peut pas être interprétée comme une grille de Sudoku.
@@ -56,10 +66,15 @@ class SudokuGrid:
             où ``0`` indique une case vide
         :type initial_values_str: str
         """
-        initial_values_list = initial_values_str.split("").reverse()
-        for y in range(0,8):
-            for x in range(0,8):
-                self.grid[y][x] = initial_values_list.pop()
+        try:
+            assert len(initial_values_str) == 81, "Entrée non valide (!=81)"
+        except AssertionError:
+            raise ValueError("entrée doit être de longueur 81")
+        initial_values_list = list(initial_values_str)
+        initial_values = initial_values_list.reverse()
+        for y in range(0,9):
+            for x in range(0,9):
+                self.grid[y][x] = int(initial_values_list.pop())
 
 
     def __str__(self):
@@ -68,7 +83,19 @@ class SudokuGrid:
         :return: Une chaîne de caractère (sur plusieurs lignes...) représentant la grille
         :rtype: str
         """
-        raise NotImplementedError()
+        s = []
+        for l in range(0, 9):
+            s.append("─" * 37)
+            s.append("\n║ ")
+            for c in range(0, 8):
+                s.append(str(self.grid[l][c]))
+                if (c + 1) % 3 == 0:
+                    s.append(" ║ ")
+                else:
+                    s.append(" │ ")
+            s.append(str(self.grid[l][8]) + " ║\n")
+        s.append("─" * 37)
+        return "".join(s)
 
     def get_row(self, i):
         """À COMPLÉTER!
@@ -79,7 +106,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la ligne donnée
         :rtype: list of int
         """
-        raise NotImplementedError()
+        return self.grid[i]
 
     def get_col(self, j):
         """À COMPLÉTER!
@@ -90,7 +117,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        raise NotImplementedError()
+        return (self.grid[i][j] for i in range(0,9)) # range ne va pas à 9
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -103,7 +130,18 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        raise NotImplementedError()
+        c = [[None, None, None], [None, None, None], [None, None, None]]
+        #for y in range(0, 9):
+        #    for x in range(0, 9):
+        #        sl = y // 3
+        #        sc = x // 3
+        for i in range(0, 3):
+            for j in range(0, 3):
+                c[i][j] = self.grid[3 * reg_row + i][3 * reg_col + j]
+        region_tc = list()
+        for e in c:
+            region_tc.extend(e)
+        return region_tc
 
     def get_empty_pos(self):
         """À COMPLÉTER!
@@ -113,7 +151,13 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of tuple of int
         """
-        raise NotImplementedError()
+        empty_poss = list()
+        for y in range(0,9):
+            for x in range(0,9):
+                if self.grid[y][x]==0:
+                    empty_poss.append((y,x))
+        return empty_poss
+
 
     def write(self, i, j, v):
         """À COMPLÉTER!
@@ -126,7 +170,14 @@ class SudokuGrid:
         :param j: Numéro de colonne de la case à mettre à jour, entre 0 et 8
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
-        raise NotImplementedError()
+        try:
+            assert 0<i<8
+            assert 0<j<8
+            assert 1<v<9
+        except:
+            pass
+#            raise UserWarning("Valeurs sortant de la plage")
+        self.grid[i][j]=v
 
     def copy(self):
         """À COMPLÉTER!
@@ -136,4 +187,7 @@ class SudokuGrid:
         *Variante avancée: vous pouvez aussi utiliser ``self.__new__(self.__class__)``
         et manuellement initialiser les attributs de la copie.*
         """
-        raise NotImplementedError()
+        s=self.__new__(self.__class__)
+        s.grid = deepcopy(self.grid)
+        return s
+#        raise NotImplementedError()

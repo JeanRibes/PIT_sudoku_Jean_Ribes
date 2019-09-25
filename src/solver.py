@@ -1,10 +1,18 @@
 #-*-coding: utf8-*-
+from grid import SudokuGrid
+def enlever_nombres_impossibles(liste):
+    nombres_possibles = list(range(1, 9))
+    for i in range(1, 9):
+        if i in liste:
+            nombres_possibles.remove(i)
+    return nombres_possibles
 
 class SudokuSolver:
     """Cette classe permet d'explorer les solutions d'une grille de Sudoku pour la résoudre.
     Elle fait intervenir des notions de programmation par contraintes
     que vous n'avez pas à maîtriser pour ce projet."""
-
+    sudokugrid:SudokuGrid = None
+    possible_values_grid = SudokuGrid("000000000000000000000000000000000000000000000000000000000000000000000000000000000")
     def __init__(self, grid):
         """À COMPLÉTER
         Ce constructeur initialise une nouvelle instance de solver à partir d'une grille initiale.
@@ -13,7 +21,18 @@ class SudokuSolver:
         :param grid: Une grille de Sudoku
         :type grid: SudokuGrid
         """
-        raise NotImplementedError()
+        self.sudokugrid = grid
+        for y in range(0,9):
+            for x in range(0,9):
+                if self.sudokugrid[y][x]==0:
+                    self.possible_values_grid[y][x]=set(enlever_nombres_impossibles(self.sudokugrid.get_row(y))
+                    .extend(enlever_nombres_impossibles(self.sudokugrid.get_col(x)))
+                    .extend(enlever_nombres_impossibles(
+                        self.sudokugrid.get_region(y//3, x//3)
+                    ))
+                                                       )
+        print(self.possible_values_grid.grid)
+        print(self.possible_values_grid)
 
     def is_valid(self):
         """À COMPLÉTER
@@ -22,6 +41,24 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution partielle actuelle peut encore mener à une solution valide
         :rtype: bool
         """
+        for y, gl in enumerate(self.sub_grille):
+            for x, gc in enumerate(gl):  # carré 3x3
+                nombres = reduce(operator.concat, gc)  # liste à plat du 3x3
+                if len(set(nombres)) != 9:
+                    return False, ("s", y, x)
+
+        for y, l in enumerate(self.grille):
+            for x, c in enumerate(l):
+                if not 1 <= c <= 9:
+                    return False, ("u", y, x)
+            if len(set(l)) != 9:  # il y a plus d'un 9 dans la ligne
+                return False, ("n", y)
+        for y, l in enumerate(self.transposee):
+            if len(set(l)) != 9:  # il y a plus d'un 9 dans la colonne
+                return False, ("t", y)
+#        return True, ()
+
+
         raise NotImplementedError()
 
     def is_solved(self):
