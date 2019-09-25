@@ -1,23 +1,14 @@
-#-*-coding: utf8-*-
+# -*-coding: utf8-*-
 import sys
 from copy import deepcopy
+
+
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
     Toutes ces méthodes sont à compléter en vous basant sur la documentation fournie en docstring.
     """
-    grid = [
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
- 
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+    grid: list = None
 
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-     [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-    ]
     @classmethod
     def from_file(cls, filename, line):
         """À COMPLÉTER!
@@ -33,15 +24,15 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée dans le fichier donné
         :rtype: SudokuGrid
         """
-        #with open(filename, 'r') as f:
+        # with open(filename, 'r') as f:
         #    line_str = list(f.readlines()[line].rstrip("\n"))
-        #f.close() #pas utilisé ici
-        line_f=None
+        # f.close() #pas utilisé ici
+        line_f = None
         with open(filename, 'r') as f:
             l_n = 0
             while l_n < line:
                 f.readline()
-                l_n+=1
+                l_n += 1
             line_f = f.readline().rstrip()
         return cls(line_f)
 
@@ -71,11 +62,23 @@ class SudokuGrid:
         except AssertionError:
             raise ValueError("entrée doit être de longueur 81")
         initial_values_list = list(initial_values_str)
-        initial_values = initial_values_list.reverse()
-        for y in range(0,9):
-            for x in range(0,9):
-                self.grid[y][x] = int(initial_values_list.pop())
+        self.grid = [
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
 
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        ]
+        initial_values_list.reverse()
+        for y in range(0, 9):
+            for x in range(0, 9):
+                self.grid[y][x] = int(initial_values_list.pop())
 
     def __str__(self):
         """À COMPLÉTER!
@@ -117,7 +120,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return (self.grid[i][j] for i in range(0,9)) # range ne va pas à 9
+        return (self.grid[i][j] for i in range(0, 9))  # range ne va pas à 9
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -131,7 +134,7 @@ class SudokuGrid:
         :rtype: list of int
         """
         c = [[None, None, None], [None, None, None], [None, None, None]]
-        #for y in range(0, 9):
+        # for y in range(0, 9):
         #    for x in range(0, 9):
         #        sl = y // 3
         #        sc = x // 3
@@ -152,12 +155,11 @@ class SudokuGrid:
         :rtype: list of tuple of int
         """
         empty_poss = list()
-        for y in range(0,9):
-            for x in range(0,9):
-                if self.grid[y][x]==0:
-                    empty_poss.append((y,x))
+        for y in range(0, 9):
+            for x in range(0, 9):
+                if self.grid[y][x] == 0:
+                    empty_poss.append((y, x))
         return empty_poss
-
 
     def write(self, i, j, v):
         """À COMPLÉTER!
@@ -171,13 +173,13 @@ class SudokuGrid:
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
         try:
-            assert 0<i<8
-            assert 0<j<8
-            assert 1<v<9
+            assert 0 < i < 8
+            assert 0 < j < 8
+            assert 1 < v < 9
         except:
             pass
-#            raise UserWarning("Valeurs sortant de la plage")
-        self.grid[i][j]=v
+        #            raise UserWarning("Valeurs sortant de la plage")
+        self.grid[i][j] = v
 
     def copy(self):
         """À COMPLÉTER!
@@ -187,7 +189,12 @@ class SudokuGrid:
         *Variante avancée: vous pouvez aussi utiliser ``self.__new__(self.__class__)``
         et manuellement initialiser les attributs de la copie.*
         """
-        s=self.__new__(self.__class__)
-        s.grid = deepcopy(self.grid)
+        s = self.__new__(self.__class__)
+        s.grid = deepcopy(self.grid)  # oui autant ne pas tout copier à la main
         return s
-#        raise NotImplementedError()
+
+    def __getitem__(self, item):
+        return self.grid.__getitem__(item)
+
+    def get_item(self, row, col):
+        return self.grid[row][col]

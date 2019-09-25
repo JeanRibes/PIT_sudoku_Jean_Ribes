@@ -38,6 +38,7 @@ class TestSudokuSolver(unittest.TestCase):
                 [9, 7, 8, 3, 5, 6, 2, 1, 4])):
             self.assertEqual(list(sol.get_row(i)), row)
 
-
+    def test_reduce_all_domains(self):
+        self._solver.reduce_all_domains()
 if __name__ == "__main__":
     unittest.main()

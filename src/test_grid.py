@@ -22,7 +22,7 @@ class TestSudokuGrid(unittest.TestCase):
             grid = SudokuGrid("12345678"*11)
 
     def test_from_file(self):
-        grid = SudokuGrid.from_file("sudoku_db.txt", random.randint(1,245))
+        grid = SudokuGrid.from_file("../sudoku_db.txt", random.randint(1,245))
 
     def test_from_stdin(self):
         with unittest.mock.patch('sys.stdin', iter(("123456789"*9,))):

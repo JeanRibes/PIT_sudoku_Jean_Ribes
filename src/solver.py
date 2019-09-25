@@ -1,18 +1,29 @@
-#-*-coding: utf8-*-
+# -*-coding: utf8-*-
 from grid import SudokuGrid
-def enlever_nombres_impossibles(liste):
-    nombres_possibles = list(range(1, 9))
+
+
+def enlever_nombres_impossibles(liste: list):
+    nombres_possibles = list(range(1, 10))
     for i in range(1, 9):
         if i in liste:
             nombres_possibles.remove(i)
+    # for i in liste:
+    #    try:
+    #        nombres_possibles.remove(i)
+    #    except ValueError:
+    #        pass
     return nombres_possibles
+
 
 class SudokuSolver:
     """Cette classe permet d'explorer les solutions d'une grille de Sudoku pour la résoudre.
     Elle fait intervenir des notions de programmation par contraintes
     que vous n'avez pas à maîtriser pour ce projet."""
-    sudokugrid:SudokuGrid = None
-    possible_values_grid = SudokuGrid("000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+    sudokugrid: SudokuGrid = None
+
+    possible_values_grid = SudokuGrid(  # ça sera une grille de sets{i}
+        "000000000000000000000000000000000000000000000000000000000000000000000000000000000")  # oui autant initialiser à 0 plutot que de faire une classe spéciale
+
     def __init__(self, grid):
         """À COMPLÉTER
         Ce constructeur initialise une nouvelle instance de solver à partir d'une grille initiale.
@@ -22,17 +33,6 @@ class SudokuSolver:
         :type grid: SudokuGrid
         """
         self.sudokugrid = grid
-        for y in range(0,9):
-            for x in range(0,9):
-                if self.sudokugrid[y][x]==0:
-                    self.possible_values_grid[y][x]=set(enlever_nombres_impossibles(self.sudokugrid.get_row(y))
-                    .extend(enlever_nombres_impossibles(self.sudokugrid.get_col(x)))
-                    .extend(enlever_nombres_impossibles(
-                        self.sudokugrid.get_region(y//3, x//3)
-                    ))
-                                                       )
-        print(self.possible_values_grid.grid)
-        print(self.possible_values_grid)
 
     def is_valid(self):
         """À COMPLÉTER
@@ -41,23 +41,6 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution partielle actuelle peut encore mener à une solution valide
         :rtype: bool
         """
-        for y, gl in enumerate(self.sub_grille):
-            for x, gc in enumerate(gl):  # carré 3x3
-                nombres = reduce(operator.concat, gc)  # liste à plat du 3x3
-                if len(set(nombres)) != 9:
-                    return False, ("s", y, x)
-
-        for y, l in enumerate(self.grille):
-            for x, c in enumerate(l):
-                if not 1 <= c <= 9:
-                    return False, ("u", y, x)
-            if len(set(l)) != 9:  # il y a plus d'un 9 dans la ligne
-                return False, ("n", y)
-        for y, l in enumerate(self.transposee):
-            if len(set(l)) != 9:  # il y a plus d'un 9 dans la colonne
-                return False, ("t", y)
-#        return True, ()
-
 
         raise NotImplementedError()
 
@@ -68,7 +51,18 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution actuelle est complète.
         :rtype: bool
         """
-        raise NotImplementedError()
+        for y in range(0, 3):  # il n'y a pas exactement 9 chiffres uniques dans un carré
+            for x in range(0, 3):  # carré 3x3
+                if len(set(self.sudokugrid.get_region(y,
+                                                      x))) != 9:  # regarder si faire la somme des 9 éléments est + rapide
+                    return False
+        for y in range(0, 9):  # il n'y a pas exactement 9 chiffre uniques dans une ligne
+            if len(set(self.sudokugrid.get_row(y))) != 9:
+                return False
+        for x in range(0, 9):  # ... dans une colonnes
+            if len(set(self.sudokugrid.get_col(x))) != 9:
+                return False
+        return True
 
     def reduce_all_domains(self):
         """À COMPLÉTER
@@ -76,7 +70,18 @@ class SudokuSolver:
         et élimine toutes les valeurs impossibles pour chaque case vide.
         *Indication: Vous pouvez utiliser les fonction ``get_row``, ``get_col`` et ``get_region`` de la grille*
         """
-        raise NotImplementedError()
+        for y in range(0, 9):
+            for x in range(0, 9):
+                if self.sudokugrid[y][x] == 0:
+                    possible_values = enlever_nombres_impossibles(
+                        self.sudokugrid.get_row(y)  # la ligne actuelle
+                        + list(self.sudokugrid.get_col(x))  # colonne actuelle
+                        + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
+                    )
+                    self.possible_values_grid[y][x] = set(possible_values)  # set pour avoir des valeurs uniques
+                else:
+                    self.possible_values_grid[y][x] = set([self.sudokugrid[y][x]])
+        return self.possible_values_grid
 
     def reduce_domains(self, last_i, last_j, last_v):
         """À COMPLÉTER
@@ -90,7 +95,11 @@ class SudokuSolver:
         :type last_j: int
         :type last_v: int
         """
-        raise NotImplementedError()
+        for i in self.possible_values_grid.get_row(last_i):
+            try:
+                i.remove(last_v)  # en fait c'est des sets
+            except KeyError:
+                pass
 
     def commit_one_var(self):
         """À COMPLÉTER
