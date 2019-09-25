@@ -1,7 +1,82 @@
 # -*-coding: utf8-*-
+import itertools
 import sys
 from copy import deepcopy
+from typing import List
 
+
+class Grid2D:
+    list2d: List[List] = None
+    length: int = 9
+
+    def __init__(self, list2d=None, length=9, default=0):
+        self.length = length
+        if list2d is None:
+            self.list2d = length * [length * [default]]  # liste 2D 9x9 de zéros
+        else:
+            self.list2d = list2d
+            self._check_list2d()  # vérifie carré de la bonne taille
+
+    def __getitem__(self, item):  # pour accéder à la liste avec [y][x] sans passer par l'attribut list2d
+        return self.list2d.__getitem__(item)
+
+    def __setitem__(self, key, value):  # pareil mais pour écrire
+        return self.list2d.__setitem__(key, value)
+
+    def get_row(self, i):
+        return self.list2d[i]
+
+    def get_col(self, j):
+        return (self.list2d[i][j] for i in range(0, 9))
+
+    def get_region_2d(self, reg_row, reg_col, region_size=3):
+        c = region_size * [[region_size * [None]]]
+        for i in range(0, region_size):
+            for j in range(0, region_size):
+                c[i][j] = self.list2d[region_size * reg_row + i][region_size * reg_col + j]
+        region_tc = list()
+        for e in c:
+            region_tc.extend(e)
+        return region_tc
+
+    def get_region(self, reg_row, reg_col, region_size=3):
+        region = list()
+        for i in range(0, region_size):
+            for j in range(0, region_size):
+                region.append(self.list2d[region_size * reg_row + i][region_size * reg_col + j])
+        return region
+
+    def _check_list2d(self):
+        assert len(self.list2d) == self.length, "Liste trop grande"
+        for row in self.list2d:
+            assert len(row) == self.length
+
+    def report_same_type(self):
+        """
+        Regarde si tous les éléments ont le même type
+        """
+        e_type = type(self.list2d[0][0])
+        for row in self.list2d:
+            for elem in self.list2d:
+                assert type(elem) == e_type, "Types are different"
+
+    def __str__(self):
+        s=[]
+        a=list(itertools.chain(*self.list2d))
+        b=[str(e) for e in a]
+        c=[len(e) for e in b]
+        largest_elem=max(c)
+        #largest_elem = len(max((str(e) for e in itertools.chain(*self.list2d))))
+        for y, row in enumerate(self.list2d):
+            s.append((1+self.length*(largest_elem+1))*"-")
+            s.append("\n|")
+            for x, elem in enumerate(row):
+                print(largest_elem-len(str(elem)))
+                print(str(elem))
+                print(len(str(elem)))
+                s.append(str(elem)+" "*(largest_elem-len(str(elem)))+"|")
+            s.append("\n")
+        return "".join(s)
 
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
@@ -173,9 +248,9 @@ class SudokuGrid:
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
         try:
-            assert 0 < i < 8
-            assert 0 < j < 8
-            assert 1 < v < 9
+            assert 0 < i < 8, "emplacement interdit"
+            assert 0 < j < 8, "emplacement interdit"
+            assert 1 < v < 9, "Valeur interdite"
         except:
             pass
         #            raise UserWarning("Valeurs sortant de la plage")
@@ -198,3 +273,6 @@ class SudokuGrid:
 
     def get_item(self, row, col):
         return self.grid[row][col]
+
+    def __setitem__(self, key, value):
+        return self.grid.__setitem__(key, value)

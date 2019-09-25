@@ -80,7 +80,7 @@ class SudokuSolver:
                     )
                     self.possible_values_grid[y][x] = set(possible_values)  # set pour avoir des valeurs uniques
                 else:
-                    self.possible_values_grid[y][x] = set([self.sudokugrid[y][x]])
+                    self.possible_values_grid[y][x] = {self.sudokugrid[y][x]}
         return self.possible_values_grid
 
     def reduce_domains(self, last_i, last_j, last_v):
