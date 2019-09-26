@@ -84,7 +84,17 @@ class Grid2D:
             #    print(len(str(elem)))
                 s.append(str(elem)+" "*(largest_elem-len(str(elem)))+"|")
             s.append("\n")
+        s.append((1 + self.length * (largest_elem + 1)) * "-")
         return "".join(s)
+
+    def get_row_except(self, row:int, col:int):
+        """ Renvoie tout la ligne sauf l'élément à l'intersection de la colonne donnée"""
+        return (e for i,e in enumerate(self.get_row(row)) if i != col)
+
+    def get_col_except(self, col:int, row:int):
+        elem_invalide = self[row][col]
+        return (self.list2d[i][col] for i in range(0, self.length) if i != row)
+
 
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.

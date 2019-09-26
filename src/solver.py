@@ -1,4 +1,6 @@
 # -*-coding: utf8-*-
+import itertools
+
 from grid import SudokuGrid, Grid2D
 
 
@@ -22,7 +24,6 @@ class SudokuSolver:
 
     sudokugrid: SudokuGrid = None  # contient le sudoku avec des 0 aux endroits non résolus
     possible_values_grid: Grid2D = None  # contient des {sets} de solutions possibles
-
     def __init__(self, grid):
         """À COMPLÉTER
         Ce constructeur initialise une nouvelle instance de solver à partir d'une grille initiale.
@@ -46,6 +47,18 @@ class SudokuSolver:
             for elem in row:
                 if len(elem) < 1:
                     return False
+        for y,row in enumerate(self.sudokugrid.grid):
+            for x, elem in enumerate(row):
+                if elem > 0:
+                    if list(self.sudokugrid.get_row(y)).count(elem) > 1:
+                        print("Une valeur apparait plus d'une'fois dans sa ligne")
+                        return False
+                    if list(self.sudokugrid.get_col(y)).count(elem) > 1:
+                        print("Une valeur apparait plus d'une fois dans sa colonne")
+                        return False
+                    if list(self.sudokugrid.get_region(y//3, x//3)).count(elem) > 1:
+                        print("une valeur apparait plsu d'une fois dans son carré")
+                        return False
         return True
 
     def is_solved(self):
@@ -85,7 +98,7 @@ class SudokuSolver:
                     )
                     self.possible_values_grid.list2d[y][x] = set(possible_values)  # set pour avoir des valeurs uniques
                 else:
-                    self.possible_values_grid.list2d[y][x] = {self.sudokugrid[y][x]}
+                    self.possible_values_grid.list2d[y][x] = {0} #{self.sudokugrid[y][x]}
         return self.possible_values_grid
 
     def reduce_domains(self, last_i, last_j, last_v):
@@ -122,7 +135,7 @@ class SudokuSolver:
     #                    print("{} at {},{}".format(elem, y, x))
                         self.possible_values_grid[y][x] = elem
                         self.sudokugrid.write(y, x, elem.pop())
-                    return (y, x, elem)
+                        return (y, x, elem)
         return None
 
     def solve_step(self):
@@ -137,6 +150,7 @@ class SudokuSolver:
         """
         if not self.commit_one_var(): # il n'y avait pas de cases avec une seule possibilité
             self.reduce_all_domains()
+            self.find_lone_occurences()
 
 
     def branch(self):
@@ -168,3 +182,33 @@ class SudokuSolver:
         :rtype: SudokuGrid or None
         """
         raise NotImplementedError()
+#6,7
+    def find_lone_occurences(self):
+        """
+        Cette méthode regarde les lignes, colonnes et carrés pour
+        voir s'il une solution dans la case actuelle apparaît dans une autre
+        case. Si cette solution n'apparaît pas deux fois dans la ligne/colonne/carré
+        on la prend.
+        Il faut bien vérifier que les autres solutions ne soient pas 0 (case remplie)
+        """
+        for y in range(0,9):
+            for x in range(0,9):
+                if self.possible_values_grid[y][x]!={0}:
+                    #if len(elem.intersect(self.possible_values_grid[y][x])) == 0:
+                    elementsH = list(itertools.chain(*self.possible_values_grid.get_row_except(y,x)))
+                    elementsV = list(itertools.chain(*self.possible_values_grid.get_col_except(x,y)))
+                    for n in self.possible_values_grid[y][x]: #int
+                        if len(set(elementsV)) > 1:
+                            if n not in elementsV and n not in self.sudokugrid.get_col(x):
+                                print("V{} at ({},{})".format(n,y,x))
+                                self.sudokugrid.write(y,x,n)
+                                self.possible_values_grid[y][x]={0}
+                        if len(set(elementsH)) > 1:
+                            if n not in elementsH and n not in self.sudokugrid.get_row(y):
+                                print("H{} at ({},{})".format(n,y,x))
+                                self.sudokugrid.write(y, x, n)
+                                self.possible_values_grid[y][x]={0}
+                            # si c'est un nombre intéressant on regarde la colonne
+                            #if n not in itertools.chain(*self.possible_values_grid.get_row_except(y,x)):
+                            #    print("final {} at ({},{})".format(n, y, x))
+                            #
