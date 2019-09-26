@@ -12,7 +12,12 @@ class Grid2D:
     def __init__(self, list2d=None, length=9, default=0):
         self.length = length
         if list2d is None:
-            self.list2d = length * [length * [default]]  # liste 2D 9x9 de zéros
+            #self.list2d = length * [length * [default]]  #CECI NE MARCHE PAS ça crée des références au lieu de 9 listes
+            self.list2d=[]
+            for y in range(0,length):
+                self.list2d.append([])
+                for x in range(0,length):
+                    self.list2d[y].append(default)
         else:
             self.list2d = list2d
             self._check_list2d()  # vérifie carré de la bonne taille
@@ -20,14 +25,17 @@ class Grid2D:
     def __getitem__(self, item):  # pour accéder à la liste avec [y][x] sans passer par l'attribut list2d
         return self.list2d.__getitem__(item)
 
-    def __setitem__(self, key, value):  # pareil mais pour écrire
-        return self.list2d.__setitem__(key, value)
+   # def __setitem__(self, key, value):  # pareil mais pour écrire
+   #     return self.list2d.__setitem__(key, value)
+
+    def __len__(self):
+        return self.list2d.__len__()
 
     def get_row(self, i):
         return self.list2d[i]
 
     def get_col(self, j):
-        return (self.list2d[i][j] for i in range(0, 9))
+        return (self.list2d[i][j] for i in range(0, self.length))
 
     def get_region_2d(self, reg_row, reg_col, region_size=3):
         c = region_size * [[region_size * [None]]]
@@ -71,9 +79,9 @@ class Grid2D:
             s.append((1+self.length*(largest_elem+1))*"-")
             s.append("\n|")
             for x, elem in enumerate(row):
-                print(largest_elem-len(str(elem)))
-                print(str(elem))
-                print(len(str(elem)))
+            #    print(largest_elem-len(str(elem)))
+            #    print(str(elem))
+            #    print(len(str(elem)))
                 s.append(str(elem)+" "*(largest_elem-len(str(elem)))+"|")
             s.append("\n")
         return "".join(s)

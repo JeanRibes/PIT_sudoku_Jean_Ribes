@@ -32,7 +32,7 @@ class SudokuSolver:
         :type grid: SudokuGrid
         """
         self.sudokugrid = grid
-        self.possible_values_grid = Grid2D()
+        self.possible_values_grid = Grid2D(default=-1)
         self.reduce_all_domains()
     def is_valid(self):
         """À COMPLÉTER
@@ -77,15 +77,15 @@ class SudokuSolver:
         for y in range(0, 9):
             for x in range(0, 9):
                 if self.sudokugrid.grid[y][x] == 0:
-                    local_others = self.sudokugrid.get_row(y) \
+                    local_others = list(self.sudokugrid.get_row(y)) \
                                    + list(self.sudokugrid.get_col(x)) \
                                    + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
                     possible_values = list_possible_solutions(
                         local_others
                     )
-                    self.possible_values_grid[y][x] = set(possible_values)  # set pour avoir des valeurs uniques
+                    self.possible_values_grid.list2d[y][x] = set(possible_values)  # set pour avoir des valeurs uniques
                 else:
-                    self.possible_values_grid[y][x] = {self.sudokugrid[y][x]}
+                    self.possible_values_grid.list2d[y][x] = {self.sudokugrid[y][x]}
         return self.possible_values_grid
 
     def reduce_domains(self, last_i, last_j, last_v):
