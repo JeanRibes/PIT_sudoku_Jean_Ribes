@@ -1,28 +1,27 @@
 # -*-coding: utf8-*-
-from grid import SudokuGrid
+from grid import SudokuGrid, Grid2D
 
 
-def enlever_nombres_impossibles(liste: list):
-    nombres_possibles = list(range(1, 10))
+def list_possible_solutions(liste: list):
+    possible_solutions = list(range(1, 10))
     for i in range(1, 9):
         if i in liste:
-            nombres_possibles.remove(i)
+            possible_solutions.remove(i)
     # for i in liste:
     #    try:
-    #        nombres_possibles.remove(i)
+    #        possible_solutions.remove(i)
     #    except ValueError:
     #        pass
-    return nombres_possibles
+    return possible_solutions
 
 
 class SudokuSolver:
     """Cette classe permet d'explorer les solutions d'une grille de Sudoku pour la résoudre.
     Elle fait intervenir des notions de programmation par contraintes
     que vous n'avez pas à maîtriser pour ce projet."""
-    sudokugrid: SudokuGrid = None
 
-    possible_values_grid = SudokuGrid(  # ça sera une grille de sets{i}
-        "000000000000000000000000000000000000000000000000000000000000000000000000000000000")  # oui autant initialiser à 0 plutot que de faire une classe spéciale
+    sudokugrid: SudokuGrid = None  # contient le sudoku avec des 0 aux endroits non résolus
+    possible_values_grid: Grid2D = None  # contient des {sets} de solutions possibles
 
     def __init__(self, grid):
         """À COMPLÉTER
@@ -33,7 +32,8 @@ class SudokuSolver:
         :type grid: SudokuGrid
         """
         self.sudokugrid = grid
-
+        self.possible_values_grid = Grid2D()
+        self.reduce_all_domains()
     def is_valid(self):
         """À COMPLÉTER
         Cette méthode vérifie qu'il reste des possibilités pour chaque case vide
@@ -41,8 +41,12 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution partielle actuelle peut encore mener à une solution valide
         :rtype: bool
         """
-
-        raise NotImplementedError()
+        self.reduce_all_domains() # MaJ des solutions possibles
+        for row in self.possible_values_grid:
+            for elem in row:
+                if len(elem) < 1:
+                    return False
+        return True
 
     def is_solved(self):
         """À COMPLÉTER
@@ -72,11 +76,12 @@ class SudokuSolver:
         """
         for y in range(0, 9):
             for x in range(0, 9):
-                if self.sudokugrid[y][x] == 0:
-                    possible_values = enlever_nombres_impossibles(
-                        self.sudokugrid.get_row(y)  # la ligne actuelle
-                        + list(self.sudokugrid.get_col(x))  # colonne actuelle
-                        + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
+                if self.sudokugrid.grid[y][x] == 0:
+                    local_others = self.sudokugrid.get_row(y) \
+                                   + list(self.sudokugrid.get_col(x)) \
+                                   + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
+                    possible_values = list_possible_solutions(
+                        local_others
                     )
                     self.possible_values_grid[y][x] = set(possible_values)  # set pour avoir des valeurs uniques
                 else:
@@ -110,7 +115,15 @@ class SudokuSolver:
         ou ``None`` si aucune case n'a pu être remplie.
         :rtype: tuple of int or None
         """
-        raise NotImplementedError()
+        for y, row in enumerate(self.possible_values_grid):
+            for x, elem in enumerate(row):
+                if self.sudokugrid[y][x] == 0:
+                    if len(elem) == 1:  # pas de 'and' pour optimiser
+    #                    print("{} at {},{}".format(elem, y, x))
+                        self.possible_values_grid[y][x] = elem
+                        self.sudokugrid.write(y, x, elem.pop())
+                    return (y, x, elem)
+        return None
 
     def solve_step(self):
         """À COMPLÉTER
@@ -122,7 +135,9 @@ class SudokuSolver:
         il est aussi possible de vérifier s'il ne reste plus qu'une seule position valide pour une certaine valeur
         sur chaque ligne, chaque colonne et dans chaque région*
         """
-        raise NotImplementedError()
+        if not self.commit_one_var(): # il n'y avait pas de cases avec une seule possibilité
+            self.reduce_all_domains()
+
 
     def branch(self):
         """À COMPLÉTER

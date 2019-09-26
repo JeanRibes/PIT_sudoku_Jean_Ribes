@@ -9,7 +9,7 @@ print("reducing domains")
 print(s.reduce_all_domains())
 print("reduced domains")
 
-rd=s.reduce_all_domains().grid
+rd=s.reduce_all_domains()
 g = Grid2D()
 g = Grid2D(rd)
 print(g.list2d)
