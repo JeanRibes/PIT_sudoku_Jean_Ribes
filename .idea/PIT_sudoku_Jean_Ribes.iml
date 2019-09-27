@@ -3,9 +3,11 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/qtcreator-ui/build-SudokuSolver-Desktop_Qt_5_13_1_clang_64bit-Debug" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/venvi" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (PIT_sudoku_Jean_Ribes)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (PIT_sudoku_Jean_Ribes) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

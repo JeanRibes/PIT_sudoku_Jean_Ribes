@@ -12,11 +12,11 @@ class Grid2D:
     def __init__(self, list2d=None, length=9, default=0):
         self.length = length
         if list2d is None:
-            #self.list2d = length * [length * [default]]  #CECI NE MARCHE PAS ça crée des références au lieu de 9 listes
-            self.list2d=[]
-            for y in range(0,length):
+            # self.list2d = length * [length * [default]]  #CECI NE MARCHE PAS ça crée des références au lieu de 9 listes
+            self.list2d = []
+            for y in range(0, length):
                 self.list2d.append([])
-                for x in range(0,length):
+                for x in range(0, length):
                     self.list2d[y].append(default)
         else:
             self.list2d = list2d
@@ -25,8 +25,8 @@ class Grid2D:
     def __getitem__(self, item):  # pour accéder à la liste avec [y][x] sans passer par l'attribut list2d
         return self.list2d.__getitem__(item)
 
-   # def __setitem__(self, key, value):  # pareil mais pour écrire
-   #     return self.list2d.__setitem__(key, value)
+    # def __setitem__(self, key, value):  # pareil mais pour écrire
+    #     return self.list2d.__setitem__(key, value)
 
     def __len__(self):
         return self.list2d.__len__()
@@ -69,29 +69,29 @@ class Grid2D:
                 assert type(elem) == e_type, "Types are different"
 
     def __str__(self):
-        s=[]
-        a=list(itertools.chain(*self.list2d))
-        b=[str(e) for e in a]
-        c=[len(e) for e in b]
-        largest_elem=max(c)
-        #largest_elem = len(max((str(e) for e in itertools.chain(*self.list2d))))
+        s = []
+        a = list(itertools.chain(*self.list2d))
+        b = [str(e) for e in a]
+        c = [len(e) for e in b]
+        largest_elem = max(c)
+        # largest_elem = len(max((str(e) for e in itertools.chain(*self.list2d))))
         for y, row in enumerate(self.list2d):
-            s.append((1+self.length*(largest_elem+1))*"-")
+            s.append((1 + self.length * (largest_elem + 1)) * "-")
             s.append("\n|")
             for x, elem in enumerate(row):
-            #    print(largest_elem-len(str(elem)))
-            #    print(str(elem))
-            #    print(len(str(elem)))
-                s.append(str(elem)+" "*(largest_elem-len(str(elem)))+"|")
+                #    print(largest_elem-len(str(elem)))
+                #    print(str(elem))
+                #    print(len(str(elem)))
+                s.append(str(elem) + " " * (largest_elem - len(str(elem))) + "|")
             s.append("\n")
         s.append((1 + self.length * (largest_elem + 1)) * "-")
         return "".join(s)
 
-    def get_row_except(self, row:int, col:int):
+    def get_row_except(self, row: int, col: int):
         """ Renvoie tout la ligne sauf l'élément à l'intersection de la colonne donnée"""
-        return (e for i,e in enumerate(self.get_row(row)) if i != col)
+        return (e for i, e in enumerate(self.get_row(row)) if i != col)
 
-    def get_col_except(self, col:int, row:int):
+    def get_col_except(self, col: int, row: int):
         elem_invalide = self[row][col]
         return (self.list2d[i][col] for i in range(0, self.length) if i != row)
 
@@ -100,7 +100,7 @@ class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
     Toutes ces méthodes sont à compléter en vous basant sur la documentation fournie en docstring.
     """
-    grid: list = None
+    grid: Grid2D = None
 
     @classmethod
     def from_file(cls, filename, line):
@@ -155,19 +155,20 @@ class SudokuGrid:
         except AssertionError:
             raise ValueError("entrée doit être de longueur 81")
         initial_values_list = list(initial_values_str)
-        self.grid = [
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        ]
+        # self.grid = [
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        # ]
+        self.grid = Grid2D(default=-1)
         initial_values_list.reverse()
         for y in range(0, 9):
             for x in range(0, 9):

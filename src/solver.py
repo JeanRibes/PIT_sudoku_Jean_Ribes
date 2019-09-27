@@ -150,6 +150,7 @@ class SudokuSolver:
                 if self.possible_values_grid[y][x] != {0}:
                     elementsH = list(itertools.chain(*self.possible_values_grid.get_row_except(y, x)))
                     elementsV = list(itertools.chain(*self.possible_values_grid.get_col_except(x, y)))
+                    elementsSquare = list(itertools.chain(*self.possible_values_grid.get_region(y//3, x//3)))
                     for n in self.possible_values_grid[y][x]:  # int
                         if len(set(elementsV)) > 1:
                             if n not in elementsV and n not in self.sudokugrid.get_col(x):
@@ -160,6 +161,12 @@ class SudokuSolver:
                         if len(set(elementsH)) > 1:
                             if n not in elementsH and n not in self.sudokugrid.get_row(y):
                                 print("H{} at ({},{})".format(n, y, x))
+                                self.sudokugrid.write(y, x, n)
+                                self.possible_values_grid[y][x] = {0}
+                                return y, x, n
+                        if len(set(elementsSquare)) > 1:
+                            if n not in elementsSquare and n not in self.sudokugrid.get_row(y):
+                                print("Sq{} at ({},{})".format(n, y, x))
                                 self.sudokugrid.write(y, x, n)
                                 self.possible_values_grid[y][x] = {0}
                                 return y, x, n
