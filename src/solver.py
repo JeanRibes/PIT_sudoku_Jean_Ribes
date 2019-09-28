@@ -191,6 +191,7 @@ class SudokuSolver:
                 print("arrêt de la résolution simple")
                 return  # il n'est plus possible de trouver une unique solution "simple"
         print("Sudoku invalide")
+        self.reduce_all_domains()
 
     def branch(self):
         """À COMPLÉTER
