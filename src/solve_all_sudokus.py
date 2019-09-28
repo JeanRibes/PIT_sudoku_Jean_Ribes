@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from grid_correction import SudokuGrid
-from solver_correction import SudokuSolver
+from grid import SudokuGrid
+from solver import SudokuSolver
 import time
 import multiprocessing
 

@@ -83,7 +83,7 @@ class SudokuSolver:
                 return False
         return True
 
-    def reduce_all_domains(self):
+    def reduce_all_domains(self, auto_complete=True):
         """À COMPLÉTER
         Cette méthode devrait être appelée à l'initialisation
         et élimine toutes les valeurs impossibles pour chaque case vide.
@@ -99,7 +99,7 @@ class SudokuSolver:
                         local_others
                     )
                     possible_values_set = set(possible_values)  # on le transforme en set
-                    if len(possible_values_set) == 1: # il n'y avait qu'une seule possibilité :)
+                    if len(possible_values_set) == 1 and auto_complete: # il n'y avait qu'une seule possibilité :)
                         self.sudokugrid.write(y, x, possible_values_set.pop())
                     else:
                         self.possible_values_grid.list2d[y][
