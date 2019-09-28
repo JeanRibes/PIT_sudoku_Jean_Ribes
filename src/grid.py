@@ -232,13 +232,11 @@ class SudokuGrid:
         #    for x in range(0, 9):
         #        sl = y // 3
         #        sc = x // 3
+        region=[]
         for i in range(0, 3):
             for j in range(0, 3):
-                c[i][j] = self.grid[3 * reg_row + i][3 * reg_col + j]
-        region_tc = list()
-        for e in c:
-            region_tc.extend(e)
-        return region_tc
+                region.append(self.grid[3 * reg_row + i][3 * reg_col + j])
+        return region
 
     def get_empty_pos(self):
         """À COMPLÉTER!

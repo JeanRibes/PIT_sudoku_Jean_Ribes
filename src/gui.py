@@ -3,17 +3,20 @@ import sys
 from code import InteractiveConsole, InteractiveInterpreter
 from contextlib import redirect_stdout
 from io import StringIO
+from threading import Thread
 from typing import List
 
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QKeyEvent, QCursor, QPalette
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QTableView, QDialog, QTableWidgetItem, QVBoxLayout, \
     QDialogButtonBox, QPushButton, QLabel, QFileDialog, QListWidgetItem, QAbstractItemView, QTableWidget, QLineEdit, \
     QPlainTextEdit
 from PyQt5 import uic
+
+import solver
 from grid import Grid2D, SudokuGrid
 from qt_ui import Ui_MainWindow
 from solver import SudokuSolver
-
 
 class ErrorDialog(QDialog):
     def __init__(self, text=None, title="Erreur", *args, **kwargs):
@@ -30,13 +33,9 @@ class ErrorDialog(QDialog):
 class SudokuGridView:
     table: QTableWidget
     table_item_grid: List[List[QTableWidgetItem]]  # garde une liste des monQitems affichés
-    sudoku_list2d: Grid2D  # référence vers la liste des entiers du SudokuSolver
-    solutions_list2d: Grid2D
 
     def __init__(self, table: QTableWidget, solver: SudokuSolver):
         self.table = table
-        self.sudoku_list2d = solver.sudokugrid.grid
-        self.solutions_list2d = solver.possible_values_grid
         self.table_item_grid = Grid2D(default=None)
 
         for y, row in enumerate(self.table_item_grid):
@@ -49,39 +48,33 @@ class SudokuGridView:
                         qitem.setBackground(QBrush(QColor("lightGray")))
                 if y // 3 == 1 and x // 3 == 1:
                     qitem.setBackground(QBrush(QColor("lightGray")))
-                qitem.setToolTip(str(self.solutions_list2d[y][x]))
+        self.sudokugrid_to_view(solver)
 
-    def view_to_sudoku(self):
+    def view_to_sudoku(self) -> Grid2D:
         """
         Écrase les données en les remplaçant par ce qui est affiché à l'écran
         """
+        new_grid = Grid2D(default=None)
         for y in range(0, 9):
             for x in range(0, 9):
                 item = self.table_item_grid[y][x].text()
                 if item == None or item == '':
                     item = 0
-                self.sudoku_list2d[y][x] = int(item)
+                new_grid[y][x] = int(item)
+        return new_grid
 
-    def sudokugrid_to_view(self):
+    def sudokugrid_to_view(self, solver: SudokuSolver):
         """
         Met à jour l'affichage après un changement des données
         """
         for y in range(0, 9):
             for x in range(0, 9):
-                self.table_item_grid[y][x].setText(str(self.sudoku_list2d[y][x]))
-                self.table_item_grid[y][x].setToolTip(str(self.solutions_list2d[y][x]))
+                if solver.sudokugrid.grid[y][x] == 0:
+                    self.table_item_grid[y][x].setText("")
+                else:
+                    self.table_item_grid[y][x].setText(str(solver.sudokugrid.grid[y][x]))
+                self.table_item_grid[y][x].setToolTip(str(solver.possible_values_grid[y][x]))
         self.table.repaint()
-
-    def change_data(self, list2d: List[List[int]]):
-        """
-        Remplace les données du solver par celles données en paramètre.
-        Ne met pas à jour l'affichage tout seul
-        :param list2d: la liste 2D des nouvelles données
-        """
-        for y in range(0, 9):
-            for x in range(0, 9):
-                self.table_item_grid[y][x].setText(str(list2d[y][x]))
-                self.sudoku_list2d[y][x] = list2d[y][x]
 
 
 class JankyDebugInterpreter(InteractiveInterpreter):
@@ -94,7 +87,9 @@ class JankyDebugInterpreter(InteractiveInterpreter):
         self.inbox = inputBox
         self.outbox = outputBox
         self.inbox.returnPressed.connect(self.read_eval_print)
-        self.outbox.appendPlainText("salut")
+        self.write("Python %s on %s\n%s\n(%s)\n" %
+                   (sys.version, sys.platform, "",
+                    self.__class__.__name__))
         super().__init__(*args, **kwargs)
         self.history = list()
 
@@ -106,9 +101,11 @@ class JankyDebugInterpreter(InteractiveInterpreter):
             return
         with redirect_stdout(self):
             try:
-                 t = exec(code, self.locals)
-                 if t is not None:
-                     self.write(t)
+                t = exec(code, self.locals)
+                if t is not None:
+                    self.write(t)
+            except SystemExit:
+                raise
             except:
                 self.showtraceback()
         self.inbox.setText("")
@@ -122,27 +119,24 @@ class JankyDebugInterpreter(InteractiveInterpreter):
         # self.outbox.setCursor(QCursor())
 
 
-class SudokuWindow(Ui_MainWindow):
-    main_window: QMainWindow
+class SudokuWindow(QMainWindow, Ui_MainWindow):
     solver: SudokuSolver
     sudoku_model: SudokuGridView
-    jid: JankyDebugInterpreter
+    jdein: JankyDebugInterpreter
 
-    def __init__(self, main_window: QMainWindow):
-        self.setupUi(main_window)
-        self.retranslateUi(main_window)
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.retranslateUi(self)
 
         self.sudokuLoad.clicked.connect(self.load_new_sudoku)
-        self.main_window = main_window
-        self.main_window.show()
 
         self.solver = SudokuSolver(
             SudokuGrid("349287501000000700000509002200095007001000400800720005100402000008000000000000376"))
 
         self.sudoku_model = SudokuGridView(self.sudokuTableWidget, self.solver)
-        self.sudoku_model.sudokugrid_to_view()
 
-        self.jid = JankyDebugInterpreter(self.in_box, self.out_box, locals=locals())
+        self.jdein = JankyDebugInterpreter(self.in_box, self.out_box, locals=locals())
         self.sudokuTableWidget.itemClicked.connect(self.sudoku_clicked)
 
         self.solveButton.clicked.connect(self.solve)
@@ -152,41 +146,64 @@ class SudokuWindow(Ui_MainWindow):
         self.gridEditMode.stateChanged.connect(self.toggle_edit_mode)
         self.exportGridButton.clicked.connect(self.export_grid)
         self.big_solve.clicked.connect(self.hard_solve)
+        try:
+            self.load_file("../sudoku_db.txt")
+        except:
+            pass
+        self.show()
 
     def dialog_select_file(self):
         file, type = QFileDialog.getOpenFileName(caption="Séléctionner un fichier de sudokus",
                                                  filter="Text File (*.txt)")
         if file == '':
             return
-        with open(file, 'r') as sudokudb_file:
-            for line in sudokudb_file.readlines():
-                self.sudokuDbList.addItem(line.rstrip("\n"))
-        self.sudokuDbList.repaint()
+        else:
+            self.load_file(file)
 
     def dblist_select(self, a: QListWidgetItem):
         print(a.text())
-        self.sudokuInput.setText(a.text())
+        self.jdein.write(a.text() + "\n")
+        self.solver = SudokuSolver(SudokuGrid(a.text()))
+        self.update_view()
 
     def solve(self):
         self.gridEditMode.setCheckState(0)
         self.toggle_edit_mode(0)
         self.solver.solve_step()
-        self.sudoku_model.sudokugrid_to_view()
+        self.update_view()
 
     def hard_solve(self):
         self.gridEditMode.setCheckState(0)
         self.toggle_edit_mode(0)
-        result:SudokuSolver = self.solver.solve()
-        self.solver=result
-        self.sudoku_model.change_data(result.sudokugrid)
-        self.sudoku_model.sudokugrid_to_view()
+        solver.daemon_runnning=False
+        if hasattr(self, 'daemon_sudoku'):
+            self.daemon_sudoku.quit()
+            self.daemon_sudoku.exit(0)
+            self.daemon_sudoku.terminate()
+
+        class DaemonSolver(QThread):
+            daemon = True
+            signal = pyqtSignal('PyQt_PyObject')
+
+            def __init__(self, solver):
+                super().__init__()
+                self.solver = solver
+
+            def run(self):
+                result:SudokuGrid = self.solver.solve()
+                self.signal.emit(SudokuSolver(result))
+
+        self.daemon_sudoku = DaemonSolver(self.solver)
+        self.daemon_sudoku.signal.connect(self.thread_receive)
+        solver.daemon_runnning=True
+        self.daemon_sudoku.start()
 
     def load_new_sudoku(self):
         sudoku_string = self.sudokuInput.text()
         self.sudokuInput.setText("")
         try:
-            self.sudoku_model.change_data(SudokuGrid(sudoku_string).grid)
-            self.sudoku_model.sudokugrid_to_view()
+            self.solver = SudokuSolver(SudokuGrid(sudoku_string))
+            self.update_view()
         except ValueError:
             qde = ErrorDialog("Erreur de format !")
             qde.exec()
@@ -197,9 +214,9 @@ class SudokuWindow(Ui_MainWindow):
     def toggle_edit_mode(self, a):
         if a == 0:
             self.sudokuTableWidget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-            self.sudoku_model.view_to_sudoku()
+            self.solver.sudokugrid.grid = self.sudoku_model.view_to_sudoku()
             self.solver.reduce_all_domains(auto_complete=False)
-            self.sudoku_model.sudokugrid_to_view()
+            self.update_view()
         elif a == 2:
             # self.sudokuTableWidget.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked)
             self.sudokuTableWidget.setEditTriggers(QAbstractItemView.EditTrigger.AllEditTriggers)
@@ -207,16 +224,29 @@ class SudokuWindow(Ui_MainWindow):
 
     def export_grid(self):
         grid_flat = list()
-        for row in self.sudoku_model.table_item_grid:
+        for row in self.sudoku_model.view_to_sudoku():
             for item in row:
                 grid_flat.append(item.text())
         self.sudokuInput.setText("".join(grid_flat))
+
+    def update_view(self):
+        self.sudoku_model.sudokugrid_to_view(self.solver)
+
+    def load_file(self, file: str):
+        with open(file, 'r') as sudokudb_file:
+            for line in sudokudb_file.readlines():
+                self.sudokuDbList.addItem(line.rstrip("\n"))
+        self.sudokuDbList.repaint()
+
+    def thread_receive(self, solver: SudokuSolver):
+        self.solver = solver
+        self.update_view()
 
 
 app = QApplication.instance()
 if not app:  # sinon on crée une instance de QApplication
     app = QApplication(sys.argv)
-main_window = SudokuWindow(QMainWindow())
+main_window = SudokuWindow()
 
 # exécution de l'application, l'exécution permet de gérer les événements
 app.exec_()

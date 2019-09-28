@@ -3,6 +3,7 @@ import itertools
 
 from grid import SudokuGrid, Grid2D
 
+daemon_running=True
 
 def list_possible_solutions(liste: list):
     possible_solutions = list(range(1, 10))
@@ -232,16 +233,19 @@ class SudokuSolver:
         (ou None si pas de solution)
         :rtype: SudokuGrid or None
         """
+        daemon_running
+        if not daemon_running:
+            return
         self.solve_step()
         self.solve_step()
         if self.is_solved():
-            return self
+            return self.sudokugrid
         else:
             if self.is_valid():
                 for solver in self.branch():
-                    s2 = solver.solve()
+                    s2= solver.solve()
                     if s2 is not None:
-                        return s2
+                        return SudokuSolver(s2).sudokugrid
             else:
                 return None
 
