@@ -151,6 +151,7 @@ class SudokuWindow(Ui_MainWindow):
         self.sudokuDbList.itemDoubleClicked.connect(self.dblist_select)
         self.gridEditMode.stateChanged.connect(self.toggle_edit_mode)
         self.exportGridButton.clicked.connect(self.export_grid)
+        self.big_solve.clicked.connect(self.hard_solve)
 
     def dialog_select_file(self):
         file, type = QFileDialog.getOpenFileName(caption="Séléctionner un fichier de sudokus",
@@ -170,6 +171,14 @@ class SudokuWindow(Ui_MainWindow):
         self.gridEditMode.setCheckState(0)
         self.toggle_edit_mode(0)
         self.solver.solve_step()
+        self.sudoku_model.sudokugrid_to_view()
+
+    def hard_solve(self):
+        self.gridEditMode.setCheckState(0)
+        self.toggle_edit_mode(0)
+        result:SudokuSolver = self.solver.solve()
+        self.solver=result
+        self.sudoku_model.change_data(result.sudokugrid)
         self.sudoku_model.sudokugrid_to_view()
 
     def load_new_sudoku(self):

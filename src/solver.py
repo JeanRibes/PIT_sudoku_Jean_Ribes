@@ -53,13 +53,16 @@ class SudokuSolver:
             for x, elem in enumerate(row):
                 if elem > 0:
                     if list(self.sudokugrid.get_row(y)).count(elem) > 1:
-                        print("Une valeur apparait plus d'une'fois dans sa ligne")
+                        print(".", end='')
+            #            print("Une valeur apparait plus d'une'fois dans sa ligne")
                         return False
                     if list(self.sudokugrid.get_col(y)).count(elem) > 1:
-                        print("Une valeur apparait plus d'une fois dans sa colonne")
+                        print(".", end='')
+             #           print("Une valeur apparait plus d'une fois dans sa colonne")
                         return False
                     if list(self.sudokugrid.get_region(y // 3, x // 3)).count(elem) > 1:
-                        print("une valeur apparait plsu d'une fois dans son carré")
+            #            print("une valeur apparait plsu d'une fois dans son carré")
+                        print(".", end='')
                         return False
         return True
 
@@ -72,14 +75,13 @@ class SudokuSolver:
         """
         for y in range(0, 3):  # il n'y a pas exactement 9 chiffres uniques dans un carré
             for x in range(0, 3):  # carré 3x3
-                if len(set(self.sudokugrid.get_region(y,
-                                                      x))) != 9:  # regarder si faire la somme des 9 éléments est + rapide
+                if sum(self.sudokugrid.get_region(y,x)) != 45:  # regarder si faire la somme des 9 éléments est + rapide
                     return False
         for y in range(0, 9):  # il n'y a pas exactement 9 chiffre uniques dans une ligne
-            if len(set(self.sudokugrid.get_row(y))) != 9:
+            if sum(self.sudokugrid.get_row(y)) != 45:
                 return False
         for x in range(0, 9):  # ... dans une colonnes
-            if len(set(self.sudokugrid.get_col(x))) != 9:
+            if sum(self.sudokugrid.get_col(x)) != 45:
                 return False
         return True
 
@@ -154,19 +156,19 @@ class SudokuSolver:
                     for n in self.possible_values_grid[y][x]:  # int
                         if len(set(elementsV)) > 1:
                             if n not in elementsV and n not in self.sudokugrid.get_col(x):
-                                print("V{} at ({},{})".format(n, y, x))
+                #                print("V{} at ({},{})".format(n, y, x))
                                 self.sudokugrid.write(y, x, n)
                                 self.possible_values_grid[y][x] = {0}
                                 return y, x, n
                         if len(set(elementsH)) > 1:
                             if n not in elementsH and n not in self.sudokugrid.get_row(y):
-                                print("H{} at ({},{})".format(n, y, x))
+                 #               print("H{} at ({},{})".format(n, y, x))
                                 self.sudokugrid.write(y, x, n)
                                 self.possible_values_grid[y][x] = {0}
                                 return y, x, n
                         if len(set(elementsSquare)) > 1:
                             if n not in elementsSquare and n not in self.sudokugrid.get_row(y):
-                                print("Sq{} at ({},{})".format(n, y, x))
+                 #               print("Sq{} at ({},{})".format(n, y, x))
                                 self.sudokugrid.write(y, x, n)
                                 self.possible_values_grid[y][x] = {0}
                                 return y, x, n
@@ -188,9 +190,9 @@ class SudokuSolver:
             if last_modification is not None:
                 self.reduce_domains(*last_modification)  # on unpack la position & valeur
             else:
-                print("arrêt de la résolution simple")
+    #            print("arrêt de la résolution simple")
                 return  # il n'est plus possible de trouver une unique solution "simple"
-        print("Sudoku invalide")
+    #    print("Sudoku invalide")
         self.reduce_all_domains()
 
     def branch(self):
@@ -206,7 +208,16 @@ class SudokuSolver:
         :return: Une liste de sous-problèmes ayant chacun une valeur différente pour la variable choisie
         :rtype: list of SudokuSolver
         """
-        raise NotImplementedError()
+        solvers = []
+        for y,row in enumerate(self.possible_values_grid):
+            for x, possible_solutions in enumerate(row):
+                for possible_solution in possible_solutions:
+                    if possible_solution != 0:
+                        new_grid = self.sudokugrid.copy()
+                        new_grid[y][x] = possible_solution
+                        solvers.append(SudokuSolver(new_grid))
+        print("branch: {} cas".format(len(solvers)))
+        return solvers
 
     def solve(self):
         """
@@ -221,7 +232,18 @@ class SudokuSolver:
         (ou None si pas de solution)
         :rtype: SudokuGrid or None
         """
-        raise NotImplementedError()
+        self.solve_step()
+        self.solve_step()
+        if self.is_solved():
+            return self
+        else:
+            if self.is_valid():
+                for solver in self.branch():
+                    s2 = solver.solve()
+                    if s2 is not None:
+                        return s2
+            else:
+                return None
 
     def find_lone_occurences(self):
         """
