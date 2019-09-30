@@ -152,7 +152,7 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         self.nextButton.clicked.connect(self.next_sudoku)
         self.previousButton.clicked.connect(self.previous_sudoku)
         try:
-            self.load_file("../sudoku_db.txt")
+            self.load_file("sudoku_db.txt")
         except:
             pass
         self.show()

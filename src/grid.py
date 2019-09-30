@@ -265,14 +265,18 @@ class SudokuGrid:
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
         try:
-            assert 0 < i < 8, "emplacement interdit"
-            assert 0 < j < 8, "emplacement interdit"
-            assert 1 < v < 9, "Valeur interdite"
-        except:
-            pass
-        #            raise UserWarning("Valeurs sortant de la plage")
+            assert 0 <= i <= 8, "emplacement Y interdit"
+            assert 0 <= j <= 8, "emplacement X interdit"
+            assert 1 <= v <= 9, "Valeur interdite"
+        except AssertionError as e:
+            print("i={}, j={}, v={}".format(i, j, v))
+            raise UserWarning("Valeurs sortant de la plage: " + e.args[0])
+        except Exception as e:
+            print(e.args)
         if self.grid[i][j] == 0 or force:
             self.grid[i][j] = v
+            return True
+        return False
 
     def copy(self):
         """À COMPLÉTER!
