@@ -18,6 +18,7 @@ from grid import Grid2D, SudokuGrid
 from qt_ui import Ui_MainWindow
 from solver import SudokuSolver
 
+
 class ErrorDialog(QDialog):
     def __init__(self, text=None, title="Erreur", *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -128,6 +129,8 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.retranslateUi(self)
+        self.debugBox.setLayout(self.debugLayout)
+        self.selectBox.setLayout(self.selectLayout)
 
         self.sudokuLoad.clicked.connect(self.load_new_sudoku)
 
@@ -146,11 +149,26 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         self.gridEditMode.stateChanged.connect(self.toggle_edit_mode)
         self.exportGridButton.clicked.connect(self.export_grid)
         self.big_solve.clicked.connect(self.hard_solve)
+        self.nextButton.clicked.connect(self.next_sudoku)
+        self.previousButton.clicked.connect(self.previous_sudoku)
         try:
             self.load_file("../sudoku_db.txt")
         except:
             pass
         self.show()
+
+    def next_sudoku(self):
+        r = self.sudokuDbList.currentRow()
+        if r < self.sudokuDbList.count():
+            self.sudokuDbList.setCurrentRow(r + 1)
+            self.dblist_select(self.sudokuDbList.selectedItems().pop())
+            self.hard_solve()
+
+    def previous_sudoku(self):
+        r = self.sudokuDbList.currentRow()
+        if r > 0:
+            self.sudokuDbList.setCurrentRow(r - 1)
+            self.dblist_select(self.sudokuDbList.selectedItems().pop())
 
     def dialog_select_file(self):
         file, type = QFileDialog.getOpenFileName(caption="Séléctionner un fichier de sudokus",
@@ -175,7 +193,7 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
     def hard_solve(self):
         self.gridEditMode.setCheckState(0)
         self.toggle_edit_mode(0)
-        solver.daemon_runnning=False
+        solver.daemon_runnning = False
         if hasattr(self, 'daemon_sudoku'):
             self.daemon_sudoku.quit()
             self.daemon_sudoku.exit(0)
@@ -190,12 +208,14 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
                 self.solver = solver
 
             def run(self):
-                result:SudokuGrid = self.solver.solve()
-                self.signal.emit(SudokuSolver(result))
+                def update(sud):
+                    self.signal.emit(SudokuSolver(sud))
+                result: SudokuGrid = self.solver.solve(update)
+                update(result)
 
         self.daemon_sudoku = DaemonSolver(self.solver)
         self.daemon_sudoku.signal.connect(self.thread_receive)
-        solver.daemon_runnning=True
+        solver.daemon_runnning = True
         self.daemon_sudoku.start()
 
     def load_new_sudoku(self):
@@ -249,4 +269,4 @@ if not app:  # sinon on crée une instance de QApplication
 main_window = SudokuWindow()
 
 # exécution de l'application, l'exécution permet de gérer les événements
-app.exec_()
+sys.exit(app.exec_())

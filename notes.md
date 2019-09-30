@@ -11,3 +11,8 @@ Mettre à jour les définition UI de Python après édition dans QtCreator
 ```shell script
 pyuic5 -o qt_ui.py ../qtcreator-ui/SudokuSolver/mainwindow.ui && python3 gui.py
 ```
+
+Branching : 
+000030900000900008570004000300076040004000100020490007000500063100007000008060000
+000090200504008006000000005002007010000605000030800900100000000400300709008040000
+celui-là fait beaucoup de .....

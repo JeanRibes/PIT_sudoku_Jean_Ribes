@@ -232,7 +232,7 @@ class SudokuGrid:
         #    for x in range(0, 9):
         #        sl = y // 3
         #        sc = x // 3
-        region=[]
+        region = []
         for i in range(0, 3):
             for j in range(0, 3):
                 region.append(self.grid[3 * reg_row + i][3 * reg_col + j])
@@ -253,7 +253,7 @@ class SudokuGrid:
                     empty_poss.append((y, x))
         return empty_poss
 
-    def write(self, i, j, v):
+    def write(self, i, j, v, force=False):
         """À COMPLÉTER!
         Cette méthode écrit la valeur ``v`` dans la case ``(i,j)`` de la grille de Sudoku.
         *Variante avancée: Levez une exception si ``i``, ``j`` ou ``v``
@@ -271,7 +271,8 @@ class SudokuGrid:
         except:
             pass
         #            raise UserWarning("Valeurs sortant de la plage")
-        self.grid[i][j] = v
+        if self.grid[i][j] == 0 or force:
+            self.grid[i][j] = v
 
     def copy(self):
         """À COMPLÉTER!
