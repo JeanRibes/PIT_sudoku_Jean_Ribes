@@ -95,6 +95,12 @@ class Grid2D:
         elem_invalide = self[row][col]
         return (self.list2d[i][col] for i in range(0, self.length) if i != row)
 
+    def copy(self):
+
+        s = self.__new__(self.__class__)
+        s.list2d = deepcopy(self.list2d)  # oui autant ne pas tout copier à la main
+        return s
+
 
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.

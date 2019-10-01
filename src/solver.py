@@ -25,7 +25,7 @@ class SudokuSolver:
     que vous n'avez pas à maîtriser pour ce projet."""
 
     sudokugrid: SudokuGrid = None  # contient le sudoku avec des 0 aux endroits non résolus
-    possible_values_grid: Grid2D = None  # contient des {sets} de solutions possibles
+    possible_values_grid: Grid2D = None  # contient des {sets} de solutions possibles, {0} si la case n'est pas vide
 
     def __init__(self, grid):
         """À COMPLÉTER
@@ -36,8 +36,8 @@ class SudokuSolver:
         :type grid: SudokuGrid
         """
         self.sudokugrid = grid
-        self.possible_values_grid = Grid2D(default=-1)
-        self.reduce_all_domains()
+        self.possible_values_grid = Grid2D(default=set())
+        self.reduce_all_domains()  # valeurs possibles pour chaque case vide
 
     def is_valid(self):
         """À COMPLÉTER
@@ -106,6 +106,7 @@ class SudokuSolver:
                     possible_values_set = set(possible_values)  # on le transforme en set
                     if len(possible_values_set) == 1 and auto_complete:  # il n'y avait qu'une seule possibilité :)
                         self.sudokugrid.write(y, x, possible_values_set.pop())
+                        self.possible_values_grid.list2d[y][x].add(0)  # si on autocomplète, on met {0} à la place
                     else:
                         self.possible_values_grid.list2d[y][
                             x] = possible_values_set  # set pour avoir des valeurs uniques
@@ -126,20 +127,20 @@ class SudokuSolver:
         :type last_v: int
         """
         for i in self.possible_values_grid.get_row(last_i):
-            try:
+            if last_v in i:
                 i.remove(last_v)  # en fait c'est des sets
-            except KeyError:
-                pass
+                if len(i) == 0:
+                    i.add(0)
         for i in self.possible_values_grid.get_col(last_j):
-            try:
+            if last_v in i:
                 i.remove(last_v)  # en fait c'est des sets
-            except KeyError:
-                pass
+                if len(i) == 0:
+                    i.add(0)
         for i in self.possible_values_grid.get_region(last_i // 3, last_j // 3):
-            try:
+            if last_v in i:
                 i.remove(last_v)  # en fait c'est des sets
-            except KeyError:
-                pass
+                if len(i) == 0:
+                    i.add(0)
 
     def commit_one_var(self):
         """À COMPLÉTER
@@ -152,11 +153,18 @@ class SudokuSolver:
         """
         for y in range(0, 9):
             for x in range(0, 9):
-                if self.possible_values_grid[y][x] != {0}:
-                   # elementsH, elementsV, elementsSquare = set(), set(), set()
-                   # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
-                   # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
-                   # elementsSquare = reduce(elementsSquare.union, self.possible_values_grid.get_region(y // 3, x // 3))
+                if self.sudokugrid.grid[y][
+                    x] == 0:  # self.possible_values_grid[y][x] != {0}  # and self.sudokugrid.grid[y][x] == 0:
+                    if len(self.possible_values_grid.list2d[y][x]) == 1 and self.possible_values_grid.list2d[y][x] != {
+                        0}:
+                        only_solution = self.possible_values_grid.list2d[y][x].pop()
+                        self.sudokugrid.write(y, x, only_solution)
+                        self.possible_values_grid[y][x] = {0}
+                        return y, x, only_solution
+                    # elementsH, elementsV, elementsSquare = set(), set(), set()
+                    # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
+                    # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
+                    # elementsSquare = reduce(elementsSquare.union, self.possible_values_grid.get_region(y // 3, x // 3))
                     elementsH = set(itertools.chain(*self.possible_values_grid.get_row_except(y, x)))
                     elementsV = set(itertools.chain(*self.possible_values_grid.get_col_except(x, y)))
                     elementsSquare = set(itertools.chain(*self.possible_values_grid.get_region(y // 3, x // 3)))
@@ -164,7 +172,7 @@ class SudokuSolver:
                         if len(elementsV) > 1:
                             if n not in elementsV and n not in self.sudokugrid.get_col(x):
                                 #                print("V{} at ({},{})".format(n, y, x))
-                                self.sudokugrid.write(y, x, n)
+                                self.sudokugrid.write(y, x, n, force=False)
                                 self.possible_values_grid[y][x] = {0}
                                 return y, x, n
                         if len(elementsH) > 1:
@@ -191,7 +199,6 @@ class SudokuSolver:
         il est aussi possible de vérifier s'il ne reste plus qu'une seule position valide pour une certaine valeur
         sur chaque ligne, chaque colonne et dans chaque région*
         """
-        self.reduce_all_domains()
         while self.is_valid():  # il n'y avait pas de cases avec une seule possibilité
             last_modification = self.commit_one_var()
             if last_modification is not None:
@@ -200,7 +207,7 @@ class SudokuSolver:
                 #            print("arrêt de la résolution simple")
                 return  # il n'est plus possible de trouver une unique solution "simple"
         #    print("Sudoku invalide")
-        # self.reduce_all_domains()
+        self.reduce_all_domains()
 
     def branch(self):
         """À COMPLÉTER
@@ -218,7 +225,7 @@ class SudokuSolver:
         solvers = []
         for y, row in enumerate(self.possible_values_grid):
             for x, possible_solutions in enumerate(row):
-                for possible_solution in possible_solutions:
+                for possible_solution in possible_solutions:  # les vides seront donc ignorées
                     if possible_solution != 0:
                         new_grid = self.sudokugrid.copy()
                         new_grid[y][x] = possible_solution
@@ -228,7 +235,7 @@ class SudokuSolver:
         print("branch: {} cas".format(len(solvers)))
         return solvers
 
-    def solve(self, update_f=None):
+    def solve(self, update_f=None, leaf_n:int=0):
         """
         Cette méthode implémente la fonction principale de la programmation par contrainte.
         Elle cherche d'abord à affiner au mieux la solution partielle actuelle par un appel à ``solve_step``.
@@ -241,22 +248,24 @@ class SudokuSolver:
         (ou None si pas de solution)
         :rtype: SudokuGrid or None
         """
+        print(leaf_n, end="")
         if not daemon_running:
             return
-        self.solve_step()
         self.solve_step()
         if self.is_solved():
             return self.sudokugrid
         else:
             if self.is_valid():
+                leaf_n+=1
                 for solver in self.branch():
                     #  if update_f is not None:
                     #      update_f(solver.sudokugrid)
                     #      time.sleep(1)
-                    s2 = solver.solve(update_f)
+                    s2 = solver.solve(update_f, leaf_n)
                     if s2 is not None:
-                        return SudokuSolver(s2).sudokugrid
-            else:
+                    #    print(leaf_n, end="")
+                        return s2
+            else: # cul-de-sac, on revient aux branches précédentes
                 return None
 
     def find_lone_occurences(self):
