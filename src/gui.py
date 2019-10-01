@@ -129,12 +129,6 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.retranslateUi(self)
-        self.debugBox.setLayout(self.debugLayout)
-        self.selectBox.setLayout(self.selectLayout)
-        self.splitter = QSplitter(self.splitterContainer)
-        self.splitter.setGeometry(QRect(10, 10, 831, 521))
-        self.splitter.addWidget(self.selectBox)
-        self.splitter.addWidget(self.sudokuContainer)  # le truc ou y'a le sudoku
 
         self.sudokuLoad.clicked.connect(self.load_new_sudoku)
 
