@@ -153,13 +153,14 @@ class SudokuSolver:
         for y in range(0, 9):
             for x in range(0, 9):
                 if self.possible_values_grid[y][x] != {0}:
-                   # elementsH, elementsV, elementsSquare = set(), set(), set()
-                   # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
-                   # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
-                   # elementsSquare = reduce(elementsSquare.union, self.possible_values_grid.get_region(y // 3, x // 3))
+                    # elementsH, elementsV, elementsSquare = set(), set(), set()
+                    # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
+                    # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
+                    # elementsSquare = reduce(elementsSquare.union, self.possible_values_grid.get_region(y // 3, x // 3))
                     elementsH = set(itertools.chain(*self.possible_values_grid.get_row_except(y, x)))
                     elementsV = set(itertools.chain(*self.possible_values_grid.get_col_except(x, y)))
-                    elementsSquare = set(itertools.chain(*self.possible_values_grid.get_region(y // 3, x // 3)))
+                    elementsSquare = set(
+                        itertools.chain(*self.possible_values_grid.get_region_except(y // 3, x // 3, y, x)))
                     for n in self.possible_values_grid[y][x]:  # int
                         if len(elementsV) > 1:
                             if n not in elementsV and n not in self.sudokugrid.get_col(x):

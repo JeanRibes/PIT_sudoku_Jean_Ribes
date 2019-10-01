@@ -92,8 +92,17 @@ class Grid2D:
         return (e for i, e in enumerate(self.get_row(row)) if i != col)
 
     def get_col_except(self, col: int, row: int):
-        elem_invalide = self[row][col]
         return (self.list2d[i][col] for i in range(0, self.length) if i != row)
+
+    def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int):
+        region = list()
+        for i in range(0, 3):
+            for j in range(0, 3):
+                y=3 * reg_row + i
+                x=3 * reg_col + j
+                if not (y == row and x == col): # et pas y!= ... sinon y'en a plusieurs qui passent ....
+                    region.append(self.list2d[y][x])
+        return region
 
 
 class SudokuGrid:

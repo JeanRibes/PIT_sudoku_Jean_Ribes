@@ -3,10 +3,8 @@ from solver import SudokuSolver
 
 s = SudokuSolver(SudokuGrid("200000060000070030048090100000300000300010009000008000001020570080730000090000004"))
 #s = SudokuSolver(SudokuGrid("504000000100300000000006480006002007900107006400600900057800000000001009000000603"))
-for s in s.branch():
-    print(s.sudokugrid)
 a:SudokuSolver=s.solve()
-print(a.sudokugrid)
+print(a)
 print(a.is_solved())
 print(a.is_valid())
 
