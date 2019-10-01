@@ -7,16 +7,12 @@ daemon_running = True
 
 
 def list_possible_solutions(liste: list):
-    possible_solutions = list(range(1, 10))
-    for i in range(1, 10):  # il faut bien aller jusqu'à 10 pour inclure 9
-        if i in liste:
-            possible_solutions.remove(i)
-    # for i in liste:
-    #    try:
+    # possible_solutions = list(range(1, 10))
+    # for i in range(1, 10):  # il faut bien aller jusqu'à 10 pour inclure 9
+    #    if i in liste:
     #        possible_solutions.remove(i)
-    #    except ValueError:
-    #        pass
-    return possible_solutions
+    return set(range(1, 10)) - set(liste)
+    # return possible_solutions
 
 
 class SudokuSolver:

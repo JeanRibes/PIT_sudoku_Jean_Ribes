@@ -6,11 +6,11 @@ from io import StringIO
 from threading import Thread
 from typing import List
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, QRect
 from PyQt5.QtGui import QBrush, QColor, QKeyEvent, QCursor, QPalette
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QTableView, QDialog, QTableWidgetItem, QVBoxLayout, \
     QDialogButtonBox, QPushButton, QLabel, QFileDialog, QListWidgetItem, QAbstractItemView, QTableWidget, QLineEdit, \
-    QPlainTextEdit
+    QPlainTextEdit, QSplitter
 from PyQt5 import uic
 
 import solver
@@ -131,6 +131,10 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         self.retranslateUi(self)
         self.debugBox.setLayout(self.debugLayout)
         self.selectBox.setLayout(self.selectLayout)
+        self.splitter = QSplitter(self.splitterContainer)
+        self.splitter.setGeometry(QRect(10, 10, 831, 521))
+        self.splitter.addWidget(self.selectBox)
+        self.splitter.addWidget(self.sudokuContainer)  # le truc ou y'a le sudoku
 
         self.sudokuLoad.clicked.connect(self.load_new_sudoku)
 
@@ -246,8 +250,9 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         grid_flat = list()
         for row in self.sudoku_model.view_to_sudoku():
             for item in row:
-                grid_flat.append(item.text())
+                grid_flat.append(str(item))
         self.sudokuInput.setText("".join(grid_flat))
+        self.repaint()
 
     def update_view(self):
         self.sudoku_model.sudokugrid_to_view(self.solver)
