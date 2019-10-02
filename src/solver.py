@@ -100,11 +100,7 @@ class SudokuSolver:
                         local_others
                     )
                     possible_values_set = set(possible_values)  # on le transforme en set
-                    if len(possible_values_set) == 1 and auto_complete:  # il n'y avait qu'une seule possibilité :)
-                        self.sudokugrid.write(y, x, possible_values_set.pop())
-                    else:
-                        self.possible_values_grid.list2d[y][
-                            x] = possible_values_set  # set pour avoir des valeurs uniques
+                    self.possible_values_grid.list2d[y][x] = possible_values_set
                 else:
                     self.possible_values_grid.list2d[y][x] = {0}  # {self.sudokugrid[y][x]}
         return self.possible_values_grid
@@ -122,22 +118,24 @@ class SudokuSolver:
         :type last_v: int
         """
         for i in self.possible_values_grid.get_row(last_i):
-            try:
-                i.remove(last_v)  # en fait c'est des sets
-            except KeyError:
-                pass
+            if last_v in i:
+                i.remove(last_v)
+                if len(i)==0:
+                    i.add(0)
+                #else:
+                #    print("bizarre : {} at (y={},x={})".format(i,last_i, last_j))
         for i in self.possible_values_grid.get_col(last_j):
-            try:
-                i.remove(last_v)  # en fait c'est des sets
-            except KeyError:
-                pass
+            if last_v in i:
+                i.remove(last_v)
+                if len(i)==0:
+                    i.add(0)
         for i in self.possible_values_grid.get_region(last_i // 3, last_j // 3):
-            try:
-                i.remove(last_v)  # en fait c'est des sets
-            except KeyError:
-                pass
+            if last_v in i:
+                i.remove(last_v)
+                if len(i)==0:
+                    i.add(0)
 
-    def commit_one_var(self):
+    def commit_one_var(self, last_y=0, last_x=0):
         """À COMPLÉTER
         Cette méthode cherche une case pour laquelle il n'y a plus qu'une seule possibilité.
         Si elle en trouve une, elle écrit cette unique valeur possible dans la grille
@@ -146,9 +144,14 @@ class SudokuSolver:
         ou ``None`` si aucune case n'a pu être remplie.
         :rtype: tuple of int or None
         """
-        for y in range(0, 9):
-            for x in range(0, 9):
+        for y in range(last_y, 9):
+            for x in range(last_x, 9):
                 if self.possible_values_grid[y][x] != {0}:
+                    if len(self.possible_values_grid[y][x]) == 1:
+                        only_solution = self.possible_values_grid[y][x].pop()
+                        self.sudokugrid.write(y, x, only_solution)
+                        self.possible_values_grid[y][x].add(0)  # la case devient {0}
+                        return y, x, only_solution
                     # elementsH, elementsV, elementsSquare = set(), set(), set()
                     # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
                     # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
@@ -188,12 +191,16 @@ class SudokuSolver:
         il est aussi possible de vérifier s'il ne reste plus qu'une seule position valide pour une certaine valeur
         sur chaque ligne, chaque colonne et dans chaque région*
         """
-        self.reduce_all_domains()
+        last_pos=(0,0) # sert à ne pas itérer la grille en entier à chaque fois
         while self.is_valid():  # il n'y avait pas de cases avec une seule possibilité
-            last_modification = self.commit_one_var()
+            last_modification = self.commit_one_var(*last_pos)
             if last_modification is not None:
                 self.reduce_domains(*last_modification)  # on unpack la position & valeur
+                last_pos=(last_modification[0], last_modification[1])
             else:
+                if last_pos != (0,0): # si l'itération commence à la fin de la grille et ne trouve rien
+                    last_pos=(0,0) # elle doit pouvoir revenir au début
+                    continue
                 #            print("arrêt de la résolution simple")
                 return  # il n'est plus possible de trouver une unique solution "simple"
         #    print("Sudoku invalide")
@@ -240,7 +247,6 @@ class SudokuSolver:
         """
         if not daemon_running:
             return
-        self.solve_step()
         self.solve_step()
         if self.is_solved():
             return self.sudokugrid
