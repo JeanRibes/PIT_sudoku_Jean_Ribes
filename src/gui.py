@@ -209,7 +209,8 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
                 def update(sud):
                     self.signal.emit(SudokuSolver(sud))
                 result: SudokuGrid = self.solver.solve(update)
-                update(result)
+                if result is not None:
+                    update(result)
 
         self.daemon_sudoku = DaemonSolver(self.solver)
         self.daemon_sudoku.signal.connect(self.thread_receive)

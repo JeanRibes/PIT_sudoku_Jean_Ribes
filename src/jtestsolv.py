@@ -1,11 +1,14 @@
 from grid import *
 from solver import SudokuSolver
-
-agrid  = SudokuGrid("349287501000000700000509002200095007001000400800720005100402000008000000000000376")
-s = SudokuSolver(agrid)
-print(s.is_solved())
-print(s.sudokugrid)
-s.solve_step()
-print(s.is_solved())
-
-
+import time
+start = time.time()
+for i in range(0, 244):
+    sg1 = SudokuGrid.from_file("sudoku_db.txt", i)
+    ss = SudokuSolver(sg1)
+    ssg01: SudokuGrid = ss.solve()
+    if ssg01 is None:
+        print('AAAAAAh')
+        raise UserWarning("sudoku non résolu")
+end = time.time()
+dt = end-start
+print(dt, end=" s\n")

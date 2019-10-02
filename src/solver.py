@@ -120,19 +120,19 @@ class SudokuSolver:
         for i in self.possible_values_grid.get_row(last_i):
             if last_v in i:
                 i.remove(last_v)
-                if len(i)==0:
+                if len(i) == 0:
                     i.add(0)
-                #else:
+                # else:
                 #    print("bizarre : {} at (y={},x={})".format(i,last_i, last_j))
         for i in self.possible_values_grid.get_col(last_j):
             if last_v in i:
                 i.remove(last_v)
-                if len(i)==0:
+                if len(i) == 0:
                     i.add(0)
         for i in self.possible_values_grid.get_region(last_i // 3, last_j // 3):
             if last_v in i:
                 i.remove(last_v)
-                if len(i)==0:
+                if len(i) == 0:
                     i.add(0)
 
     def commit_one_var(self, last_y=0, last_x=0):
@@ -191,16 +191,18 @@ class SudokuSolver:
         il est aussi possible de vérifier s'il ne reste plus qu'une seule position valide pour une certaine valeur
         sur chaque ligne, chaque colonne et dans chaque région*
         """
-        last_pos=(0,0) # sert à ne pas itérer la grille en entier à chaque fois
-        while self.is_valid():  # il n'y avait pas de cases avec une seule possibilité
-            last_modification = self.commit_one_var(*last_pos)
+        #last_pos = (0, 0)  # sert à ne pas itérer la grille en entier à chaque fois
+        last_modification = 1
+        while last_modification is not None:  # il n'y avait pas de cases avec une seule possibilité
+            # en fait is_valid ne vérifie pas s'il reste des possibilités
+            last_modification = self.commit_one_var()#*last_pos)
             if last_modification is not None:
                 self.reduce_domains(*last_modification)  # on unpack la position & valeur
-                last_pos=(last_modification[0], last_modification[1])
+                #last_pos = (last_modification[0], last_modification[1])
             else:
-                if last_pos != (0,0): # si l'itération commence à la fin de la grille et ne trouve rien
-                    last_pos=(0,0) # elle doit pouvoir revenir au début
-                    continue
+                #if last_pos != (0, 0):  # si l'itération commence à la fin de la grille et ne trouve rien
+                #    last_pos = (0, 0)  # elle doit pouvoir revenir au début
+                #    continue
                 #            print("arrêt de la résolution simple")
                 return  # il n'est plus possible de trouver une unique solution "simple"
         #    print("Sudoku invalide")
@@ -219,17 +221,25 @@ class SudokuSolver:
         :return: Une liste de sous-problèmes ayant chacun une valeur différente pour la variable choisie
         :rtype: list of SudokuSolver
         """
-        solvers = []
+
+        solutions = []
         for y, row in enumerate(self.possible_values_grid):
             for x, possible_solutions in enumerate(row):
-                for possible_solution in possible_solutions:
-                    if possible_solution != 0:
-                        new_grid = self.sudokugrid.copy()
-                        new_grid[y][x] = possible_solution
-                        new_solver = SudokuSolver(new_grid)
-                        if new_solver.is_valid():
-                            solvers.append(new_solver)
-        print("branch: {} cas".format(len(solvers)))
+                if possible_solutions != {0}:
+                    solutions.append((y, x, possible_solutions))
+        solutions.sort(key=lambda elem: len(elem[2]))  # on trie les tuples par 3e élément (nombre de solutions)
+
+        solvers = []
+        y, x, selected_solutions = solutions[0]
+        for selected_solution in selected_solutions:
+            new_grid = self.sudokugrid.copy()
+            new_grid[y][x] = selected_solution
+            new_solver = SudokuSolver(new_grid)
+            #if new_solver.is_valid():
+            solvers.append(new_solver)
+            if selected_solution == 0:
+                raise UserWarning("0 trouvé comme solution possible !")
+        #print("branch: {} cas".format(len(solvers)))
         return solvers
 
     def solve(self, update_f=None):
@@ -245,21 +255,25 @@ class SudokuSolver:
         (ou None si pas de solution)
         :rtype: SudokuGrid or None
         """
-        if not daemon_running:
-            return
+        # if not daemon_running:
+        #    return
         self.solve_step()
         if self.is_solved():
             return self.sudokugrid
         else:
             if self.is_valid():
-                for solver in self.branch():
+                solvers = self.branch()
+                for solver in solvers:
                     #  if update_f is not None:
                     #      update_f(solver.sudokugrid)
                     #      time.sleep(1)
+                    a = 1
                     s2 = solver.solve(update_f)
                     if s2 is not None:
-                        return SudokuSolver(s2).sudokugrid
+                        return s2
+                # return None # je pense que ça ne sert à rien
             else:
+                a = 1
                 return None
 
     def find_lone_occurences(self):
