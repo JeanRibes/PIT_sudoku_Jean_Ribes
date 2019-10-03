@@ -1,21 +1,36 @@
 from grid import *
 from solver import SudokuSolver
 
-sg = SudokuGrid("175600000009002005000080040006020000008506400000030800050010000700200410000003967")
-b= Grid2D(sg.grid.copy())
-print(sg.grid)
-print(b.get_region_except(2,2,1,1))
+sg1 = SudokuGrid("200000060000075030048090100000300000300010009000008000001020570080730000090000004")
+ssg01 = SudokuSolver(sg1)
+
+def solve(solver: SudokuSolver):
+    solver.solve_step()
+    if solver.is_solved():
+        return solver
+    elif solver.is_valid():
+        for child_solver in solver.branch():
+            child_solver.reduce_all_domains()
+            c_s = solve(child_solver)
+            if c_s is not None:
+                return c_s
+    else:
+        print(".", end='')
+        return None
+solved = solve(ssg01)
+print(solved.sudokugrid)
+
 sys.exit(0)
-import time
-start = time.time()
-for i in range(0, 244):
-    sg1 = SudokuGrid.from_file("sudoku_db.txt", i)
-    ss = SudokuSolver(sg1)
-    ssg01: SudokuGrid = ss.solve()
-    if ssg01 is None:
-        print('AAAAAAh')
-        raise UserWarning("sudoku non résolu")
-end = time.time()
-dt = end-start
-print()
-print(dt, end=" s\n")
+s01 = ssg01.branch()
+v_s=list()
+for solver in s01:
+    solver.solve_step()
+    if solver.is_valid():
+        print(solver.is_solved())
+        for s2 in solver.branch():
+            v_s.append(s2)
+for solver in v_s:
+    solver.solve_step()
+    if solver.is_valid():
+        if solver.is_solved():
+            print(solver.sudokugrid)

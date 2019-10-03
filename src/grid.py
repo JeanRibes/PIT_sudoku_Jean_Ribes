@@ -20,7 +20,7 @@ class Grid2D:
     def __init__(self, list2d=None, length=9, default=0):
         self.length = length
         if list2d is None:
-            self.list2d = np.zeros(729).reshape(9, 9, 9)
+            self.list2d = np.zeros(729, dtype=np.uint8).reshape(9, 9, 9)
         else:
             self.list2d = list2d
 
@@ -77,10 +77,14 @@ class Grid2D:
 
     def get_row_except(self, row: int, col: int) -> Iterable[int]:
         """ Renvoie tout la ligne sauf l'élément à l'intersection de la colonne donnée"""
-        return np.delete(self.list2d, col, axis=0)[row]
+        return np.delete(self.list2d, col, axis=1)[row].flatten()
 
     def get_col_except(self, col: int, row: int) -> Iterable[int]:
-        return np.delete(self.list2d, row, axis=1)[:, col]
+        try:
+            return np.delete(self.list2d, row, axis=0)[:, col].flatten()
+        except IndexError as e:
+            print(col, " ",row)
+            raise e
 
     def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int) -> Iterable[int]:
         return np.delete(self.get_region(reg_row, reg_col), 3 * row + col)
@@ -145,7 +149,7 @@ class SudokuGrid:
         except AssertionError:
             raise ValueError("entrée doit être de longueur 81")
         initial_values_list = list(initial_values_str)
-        self.grid = np.zeros(shape=(9, 9), dtype=int)
+        self.grid = np.zeros(shape=(9, 9), dtype=np.uint8)
         initial_values_list.reverse()
         for y in range(0, 9):
             for x in range(0, 9):
@@ -242,7 +246,7 @@ class SudokuGrid:
         et manuellement initialiser les attributs de la copie.*
         """
         s = self.__new__(self.__class__)
-        s.grid = self.grid.copy()  # oui autant ne pas tout copier à la main
+        s.grid = deepcopy(self.grid)  # oui autant ne pas tout copier à la main
         return s
 
     def __getitem__(self, item):
