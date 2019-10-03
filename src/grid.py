@@ -31,11 +31,11 @@ class Grid2D:
     def __len__(self):
         return self.list2d.__len__()
 
-    def get_row(self, i):
+    def get_row(self, i) -> List[int]:
         return self.list2d[i]
 
-    def get_col(self, j):
-        return (self.list2d[i][j] for i in range(0, self.length))
+    def get_col(self, j) -> List[int]:
+        return [self.list2d[i][j] for i in range(0, self.length)]
 
     def get_region_2d(self, reg_row, reg_col, region_size=3):
         c = region_size * [[region_size * [None]]]
@@ -47,12 +47,9 @@ class Grid2D:
             region_tc.extend(e)
         return region_tc
 
-    def get_region(self, reg_row, reg_col, region_size=3):
-        region = list()
-        for i in range(0, region_size):
-            for j in range(0, region_size):
-                region.append(self.list2d[region_size * reg_row + i][region_size * reg_col + j])
-        return region
+    def get_region(self, reg_row, reg_col, region_size=3) -> List[int]:
+        return [self.list2d[region_size * reg_row + i][region_size * reg_col + j] for i in range(0, region_size) for j
+                in range(0, region_size)]
 
     def _check_list2d(self):
         assert len(self.list2d) == self.length, "Liste trop grande"
@@ -87,22 +84,17 @@ class Grid2D:
         s.append((1 + self.length * (largest_elem + 1)) * "-")
         return "".join(s)
 
-    def get_row_except(self, row: int, col: int):
+    def get_row_except(self, row: int, col: int) -> Iterable[int]:
         """ Renvoie tout la ligne sauf l'élément à l'intersection de la colonne donnée"""
-        return (e for i, e in enumerate(self.get_row(row)) if i != col)
+        return [solution for i, solutions in enumerate(self.get_row(row)) if i != col for solution in solutions]
 
-    def get_col_except(self, col: int, row: int):
-        return (self.list2d[i][col] for i in range(0, self.length) if i != row)
+    def get_col_except(self, col: int, row: int) -> Iterable[int]:
+        return [solution for i in range(0, self.length) if i != row for solution in self.list2d[i][col]]
 
-    def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int):
-        region = list()
-        for i in range(0, 3):
-            for j in range(0, 3):
-                y=3 * reg_row + i
-                x=3 * reg_col + j
-                if not (y == row and x == col): # et pas y!= ... sinon y'en a plusieurs qui passent ....
-                    region.append(self.list2d[y][x])
-        return region
+    def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int) -> Iterable[int]:
+        return [solution for i in range(0, 3) for j in range(0, 3) if
+                not (3 * reg_row + i == row and 3 * reg_col + j == col) for solution in
+                self.list2d[3 * reg_row + i][3 * reg_col + j]]
 
 
 class SudokuGrid:
@@ -214,7 +206,7 @@ class SudokuGrid:
         """
         return self.grid[i]
 
-    def get_col(self, j):
+    def get_col(self, j) -> List[int]:
         """À COMPLÉTER!
         Cette méthode extrait une colonne donnée de la grille de Sudoku.
         *Variante avancée: Renvoyez un générateur sur les valeurs au lieu d'une liste*
@@ -223,7 +215,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return (self.grid[i][j] for i in range(0, 9))  # range ne va pas à 9
+        return [self.grid[i][j] for i in range(0, 9)]  # range ne va pas à 9
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -236,11 +228,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        region = []
-        for i in range(0, 3):
-            for j in range(0, 3):
-                region.append(self.grid[3 * reg_row + i][3 * reg_col + j])
-        return region
+        return [self.grid[3 * reg_row + i][3 * reg_col + j] for i in range(0, 3) for j in range(0, 3)]
 
     def get_empty_pos(self):
         """À COMPLÉTER!

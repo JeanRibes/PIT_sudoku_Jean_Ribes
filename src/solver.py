@@ -51,15 +51,15 @@ class SudokuSolver:
         for y, row in enumerate(self.sudokugrid.grid):
             for x, elem in enumerate(row):
                 if elem > 0:
-                    if list(self.sudokugrid.get_row(y)).count(elem) > 1:
+                    if self.sudokugrid.get_row(y).count(elem) > 1:
                         print(".", end='')
                         #            print("Une valeur apparait plus d'une'fois dans sa ligne")
                         return False
-                    if list(self.sudokugrid.get_col(y)).count(elem) > 1:
+                    if self.sudokugrid.get_col(y).count(elem) > 1:
                         print(".", end='')
                         #           print("Une valeur apparait plus d'une fois dans sa colonne")
                         return False
-                    if list(self.sudokugrid.get_region(y // 3, x // 3)).count(elem) > 1:
+                    if self.sudokugrid.get_region(y // 3, x // 3).count(elem) > 1:
                         #            print("une valeur apparait plsu d'une fois dans son carré")
                         print(".", end='')
                         return False
@@ -92,8 +92,8 @@ class SudokuSolver:
         *Indication: Vous pouvez utiliser les fonction ``get_row``, ``get_col`` et ``get_region`` de la grille*
         """
         for y, x in self.sudokugrid.get_empty_pos():
-            local_others = list(self.sudokugrid.get_row(y)) \
-                           + list(self.sudokugrid.get_col(x)) \
+            local_others = self.sudokugrid.get_row(y) \
+                           + self.sudokugrid.get_col(x) \
                            + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
             possible_values = list_possible_solutions(
                 local_others
