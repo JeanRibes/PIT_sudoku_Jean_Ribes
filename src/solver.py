@@ -1,6 +1,8 @@
 # -*-coding: utf8-*-
 import itertools
 
+import numpy as np
+
 from grid import SudokuGrid, Grid2D
 
 daemon_running = True
@@ -32,7 +34,7 @@ class SudokuSolver:
         :type grid: SudokuGrid
         """
         self.sudokugrid = grid
-        self.possible_values_grid = Grid2D(default={0})
+        self.possible_values_grid = Grid2D()
         self.reduce_all_domains()
 
     def is_valid(self):
@@ -43,23 +45,22 @@ class SudokuSolver:
         :rtype: bool
         """
         self.reduce_all_domains()  # MaJ des solutions possibles
-        for row in self.possible_values_grid.list2d:
-            for elem in row:
-                if elem is not None:
-                    if len(elem) < 1:
-                        return False
+        for y, x in self.sudokugrid.get_empty_pos():
+            if self.possible_values_grid[y][
+                x].sum() == 0:  # aucun des éléments n'est supérieur à 0, donc il n'y a plus de solutions possibles
+                return False
         for y, row in enumerate(self.sudokugrid.grid):
             for x, elem in enumerate(row):
                 if elem > 0:
-                    if self.sudokugrid.get_row(y).count(elem) > 1:
+                    if np.count_nonzero(self.sudokugrid.get_row(y) == elem) > 1:
                         print(".", end='')
                         #            print("Une valeur apparait plus d'une'fois dans sa ligne")
                         return False
-                    if self.sudokugrid.get_col(y).count(elem) > 1:
+                    if np.count_nonzero(self.sudokugrid.get_col(x) == elem) > 1:
                         print(".", end='')
                         #           print("Une valeur apparait plus d'une fois dans sa colonne")
                         return False
-                    if self.sudokugrid.get_region(y // 3, x // 3).count(elem) > 1:
+                    if np.count_nonzero(self.sudokugrid.get_region(y // 3, x // 3)==elem) > 1:
                         #            print("une valeur apparait plsu d'une fois dans son carré")
                         print(".", end='')
                         return False
@@ -95,10 +96,7 @@ class SudokuSolver:
             local_others = self.sudokugrid.get_row(y) \
                            + self.sudokugrid.get_col(x) \
                            + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
-            possible_values = list_possible_solutions(
-                local_others
-            )
-            possible_values_set = set(possible_values)  # on le transforme en set
+            possible_values_set = np.unique(np.setdiff1d(np.arange(1,10), local_others))  # on le transforme en set
             if 0 in possible_values_set:
                 print("grosse errueur ! 0 dans reduce_all_domains")
                 raise UserWarning

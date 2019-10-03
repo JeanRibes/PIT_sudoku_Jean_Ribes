@@ -3,24 +3,26 @@ import itertools
 import sys
 from copy import deepcopy
 from typing import List, Iterable
+import numpy as np
 
 
 class Grid2D:
+    """
+    Structure de données utilisée pour stocker les possiblitées
+    array 3 dimensions
+    dans la dernière dimension, si l'élément est > 0 c'est une des solutions possibles
+
+    Quand une case est remplie dans le sudoku, il ne faut plus la regarder dans la grille des possiblités
+    """
     list2d: List[List] = None
     length: int = 9
 
     def __init__(self, list2d=None, length=9, default=0):
         self.length = length
         if list2d is None:
-            # self.list2d = length * [length * [default]]  #CECI NE MARCHE PAS ça crée des références au lieu de 9 listes
-            self.list2d = []
-            for y in range(0, length):
-                self.list2d.append([])
-                for x in range(0, length):
-                    self.list2d[y].append(default)
+            self.list2d = np.zeros(729).reshape(9, 9, 9)
         else:
             self.list2d = list2d
-            self._check_list2d()  # vérifie carré de la bonne taille
 
     def __getitem__(self, item):  # pour accéder à la liste avec [y][x] sans passer par l'attribut list2d
         return self.list2d.__getitem__(item)
@@ -35,21 +37,10 @@ class Grid2D:
         return self.list2d[i]
 
     def get_col(self, j) -> List[int]:
-        return [self.list2d[i][j] for i in range(0, self.length)]
-
-    def get_region_2d(self, reg_row, reg_col, region_size=3):
-        c = region_size * [[region_size * [None]]]
-        for i in range(0, region_size):
-            for j in range(0, region_size):
-                c[i][j] = self.list2d[region_size * reg_row + i][region_size * reg_col + j]
-        region_tc = list()
-        for e in c:
-            region_tc.extend(e)
-        return region_tc
+        return self.list2d[:, j]
 
     def get_region(self, reg_row, reg_col, region_size=3) -> List[int]:
-        return [self.list2d[region_size * reg_row + i][region_size * reg_col + j] for i in range(0, region_size) for j
-                in range(0, region_size)]
+        return self.list2d[3 * reg_row:3 * (reg_row + 1), 3 * reg_col:3 * (reg_col + 1)].flatten()
 
     def _check_list2d(self):
         assert len(self.list2d) == self.length, "Liste trop grande"
@@ -86,22 +77,20 @@ class Grid2D:
 
     def get_row_except(self, row: int, col: int) -> Iterable[int]:
         """ Renvoie tout la ligne sauf l'élément à l'intersection de la colonne donnée"""
-        return [solution for i, solutions in enumerate(self.get_row(row)) if i != col for solution in solutions]
+        return np.delete(self.list2d, col, axis=0)[row]
 
     def get_col_except(self, col: int, row: int) -> Iterable[int]:
-        return [solution for i in range(0, self.length) if i != row for solution in self.list2d[i][col]]
+        return np.delete(self.list2d, row, axis=1)[:, col]
 
     def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int) -> Iterable[int]:
-        return [solution for i in range(0, 3) for j in range(0, 3) if
-                not (3 * reg_row + i == row and 3 * reg_col + j == col) for solution in
-                self.list2d[3 * reg_row + i][3 * reg_col + j]]
+        return np.delete(self.get_region(reg_row, reg_col), 3 * row + col)
 
 
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
     Toutes ces méthodes sont à compléter en vous basant sur la documentation fournie en docstring.
     """
-    grid: Grid2D = None
+    grid: np.ndarray
 
     @classmethod
     def from_file(cls, filename, line):
@@ -156,20 +145,7 @@ class SudokuGrid:
         except AssertionError:
             raise ValueError("entrée doit être de longueur 81")
         initial_values_list = list(initial_values_str)
-        # self.grid = [
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        # ]
-        self.grid = Grid2D(default=-1)
+        self.grid = np.zeros(shape=(9, 9), dtype=int)
         initial_values_list.reverse()
         for y in range(0, 9):
             for x in range(0, 9):
@@ -215,7 +191,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return [self.grid[i][j] for i in range(0, 9)]  # range ne va pas à 9
+        return self.grid[:, j]
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -228,7 +204,8 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return [self.grid[3 * reg_row + i][3 * reg_col + j] for i in range(0, 3) for j in range(0, 3)]
+        return self.grid[3 * reg_row:3 * (reg_row + 1), 3 * reg_col:3 * (reg_col + 1)].flatten()
+        # return [self.grid[3 * reg_row + i][3 * reg_col + j] for i in range(0, 3) for j in range(0, 3)]
 
     def get_empty_pos(self):
         """À COMPLÉTER!
@@ -265,7 +242,7 @@ class SudokuGrid:
         et manuellement initialiser les attributs de la copie.*
         """
         s = self.__new__(self.__class__)
-        s.grid = deepcopy(self.grid)  # oui autant ne pas tout copier à la main
+        s.grid = self.grid.copy()  # oui autant ne pas tout copier à la main
         return s
 
     def __getitem__(self, item):
