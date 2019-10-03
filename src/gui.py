@@ -149,11 +149,20 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         self.big_solve.clicked.connect(self.hard_solve)
         self.nextButton.clicked.connect(self.next_sudoku)
         self.previousButton.clicked.connect(self.previous_sudoku)
+
+        self.testSolvedButton.clicked.connect(self.verifier_solved)
+
+        self.solvedCheckbox.clicked.connect(self.verifier_solved)
         try:
             self.load_file("sudoku_db.txt")
         except:
             pass
         self.show()
+
+    def verifier_solved(self):
+        self.gridEditMode.setCheckState(0)
+        self.solvedCheckbox.setChecked(self.solver.is_solved())
+        self.repaint()
 
     def next_sudoku(self):
         r = self.sudokuDbList.currentRow()
@@ -228,6 +237,8 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
             qde.exec()
 
     def sudoku_clicked(self, item: QTableWidgetItem):
+        self.gridEditMode.setCheckState(2)
+        self.sudokuTableWidget.editItem(item)
         print("y={}, x={}".format(item.row(), item.column()))
 
     def toggle_edit_mode(self, a):
@@ -251,6 +262,7 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
 
     def update_view(self):
         self.sudoku_model.sudokugrid_to_view(self.solver)
+        self.repaint()
 
     def load_file(self, file: str):
         with open(file, 'r') as sudokudb_file:
