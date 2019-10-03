@@ -236,11 +236,6 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        c = [[None, None, None], [None, None, None], [None, None, None]]
-        # for y in range(0, 9):
-        #    for x in range(0, 9):
-        #        sl = y // 3
-        #        sc = x // 3
         region = []
         for i in range(0, 3):
             for j in range(0, 3):
@@ -255,12 +250,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of tuple of int
         """
-        empty_poss = list()
-        for y in range(0, 9):
-            for x in range(0, 9):
-                if self.grid[y][x] == 0:
-                    empty_poss.append((y, x))
-        return empty_poss
+        return ((y, x) for y in range(0, 9) for x in range(0, 9) if self.grid[y][x] == 0)
 
     def write(self, i, j, v, force=False):
         """À COMPLÉTER!
@@ -273,19 +263,10 @@ class SudokuGrid:
         :param j: Numéro de colonne de la case à mettre à jour, entre 0 et 8
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
-        try:
-            assert 0 <= i <= 8, "emplacement Y interdit"
-            assert 0 <= j <= 8, "emplacement X interdit"
-            assert 1 <= v <= 9, "Valeur interdite"
-        except AssertionError as e:
-            print("i={}, j={}, v={}".format(i, j, v))
-            raise UserWarning("Valeurs sortant de la plage: " + e.args[0])
-        except Exception as e:
-            print(e.args)
-        if self.grid[i][j] == 0 or force:
+        if 1 <= v <= 9 and 0 <= i <= 8 and 0 <= j <= 8 and (self.grid[i][j] == 0 or force):
             self.grid[i][j] = v
             return True
-        return False
+        raise UserWarning("erreur sur i,j ou v")
 
     def copy(self):
         """À COMPLÉTER!

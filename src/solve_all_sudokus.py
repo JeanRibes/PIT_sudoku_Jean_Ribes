@@ -14,7 +14,7 @@ def solve_all(running_times):
         solver.solve()
         running_times.append(1000*(time.monotonic() - start))
         print("\r[{: <40}] ({:.0%})".format('='*int(40*l/244), l/244), end='')
-        time.sleep(1)
+        #time.sleep(1)
 
 
 if __name__ == "__main__":

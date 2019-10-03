@@ -11,4 +11,5 @@ for i in range(0, 244):
         raise UserWarning("sudoku non résolu")
 end = time.time()
 dt = end-start
+print()
 print(dt, end=" s\n")
