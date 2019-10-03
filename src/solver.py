@@ -55,7 +55,7 @@ class SudokuSolver:
                         print(".", end='')
                         #            print("Une valeur apparait plus d'une'fois dans sa ligne")
                         return False
-                    if self.sudokugrid.get_col(y).count(elem) > 1:
+                    if self.sudokugrid.get_col(x).count(elem) > 1:
                         print(".", end='')
                         #           print("Une valeur apparait plus d'une fois dans sa colonne")
                         return False
