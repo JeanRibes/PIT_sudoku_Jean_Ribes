@@ -60,7 +60,7 @@ class SudokuSolver:
                         print(".", end='')
                         #           print("Une valeur apparait plus d'une fois dans sa colonne")
                         return False
-                    if np.count_nonzero(self.sudokugrid.get_region(y // 3, x // 3)==elem) > 1:
+                    if np.count_nonzero(self.sudokugrid.get_region(y // 3, x // 3) == elem) > 1:
                         #            print("une valeur apparait plsu d'une fois dans son carré")
                         print(".", end='')
                         return False
@@ -104,7 +104,8 @@ class SudokuSolver:
             if 0 in possible_values_set:
                 print("grosse errueur ! 0 dans reduce_all_domains")
                 raise UserWarning
-            self.possible_values_grid.list2d[y][x] = possible_values_set
+            np.copyto(self.possible_values_grid.list2d[y][x][:len(possible_values_set)],
+                      possible_values_set.astype(np.uint8))
         return self.possible_values_grid
 
     def reduce_domains(self, last_i, last_j, last_v):
