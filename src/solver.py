@@ -152,14 +152,9 @@ class SudokuSolver:
                     self.sudokugrid.write(y, x, only_solution)
                     possible_solutions.add(0)  # la case devient {0}
                     return y, x, only_solution
-            # elementsH, elementsV, elementsSquare = set(), set(), set()
-            # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
-            # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
-            # elementsSquare = reduce(elementsSquare.union, self.possible_values_grid.get_region(y // 3, x // 3))
-            elementsH = set(itertools.chain(*self.possible_values_grid.get_row_except(y, x)))
-            elementsV = set(itertools.chain(*self.possible_values_grid.get_col_except(x, y)))
-            elementsSquare = set(
-                itertools.chain(*self.possible_values_grid.get_region_except(y // 3, x // 3, y, x)))
+            elementsH = set(self.possible_values_grid.get_row_except(y, x))
+            elementsV = set(self.possible_values_grid.get_col_except(x, y))
+            elementsSquare = set(self.possible_values_grid.get_region_except(y // 3, x // 3, y, x))
             for n in possible_solutions:  # int
                 if len(elementsV) > 1:
                     if n not in elementsV and n not in self.sudokugrid.get_col(x):
