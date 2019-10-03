@@ -2,7 +2,7 @@
 import itertools
 import sys
 from copy import deepcopy
-from typing import List
+from typing import List, Iterable
 
 
 class Grid2D:
