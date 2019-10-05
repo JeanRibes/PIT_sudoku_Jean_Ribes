@@ -45,14 +45,13 @@ class SudokuGrid:
             où ``0`` indique une case vide
         :type initial_values_str: str
         """
-        if len(initial_values_str) != 81:
+        if len(initial_values_str)==81 :
+            self.sudoku=np.zeros(shape=(9, 9), dtype=np.uint8)
+            for i in range(0,9):
+                for j in range(0,9):
+                    self.sudoku[i][j]=int(initial_values_str[9*i+j])
+        else:
             raise ValueError
-        initial_values_list = list(initial_values_str)
-        self.grid = np.zeros(shape=(9, 9), dtype=np.uint8)
-        initial_values_list.reverse()
-        for y in range(0, 9):
-            for x in range(0, 9):
-                self.grid[y][x] = int(initial_values_list.pop())
 
     def __str__(self):
         """À COMPLÉTER!
@@ -61,10 +60,10 @@ class SudokuGrid:
         :rtype: str
         """
         string = ""
-        for i in range(0,len(self.grid)):
-            for j in range(0, len(self.grid[i])):
-                string = string + str(self.grid[i][j])
-            string = string + "\n"
+        for i in range(0, len(self.sudoku)):
+            for j in range(0, len(self.sudoku[i])):
+                string=string+str(self.sudoku[i][j])
+            string=string+"\n"
         return string
 
     def get_row(self, i):
@@ -76,7 +75,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la ligne donnée
         :rtype: list of int
         """
-        return self.grid[i]
+        return self.sudoku[i]
 
     def get_col(self, j):
         """À COMPLÉTER!
@@ -87,7 +86,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return self.grid[:, j]
+        return self.sudoku[:, j]
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -100,7 +99,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return self.grid[3 * reg_row:3 * (reg_row + 1), 3 * reg_col:3 * (reg_col + 1)].flatten()
+        return self.sudoku[3 * reg_row:3 * (reg_row + 1), 3 * reg_col:3 * (reg_col + 1)].flatten()
 
     def get_empty_pos(self):
         """À COMPLÉTER!
@@ -110,7 +109,12 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of tuple of int
         """
-        return [(y, x) for y in range(0, 9) for x in range(0, 9) if self.grid[y][x] == 0]
+        empty_pos=[]
+        for i in range(0,9):
+            for j in range(0,9):
+                if self.sudoku[i][j] == 0:
+                   empty_pos.append((i,j))
+        return empty_pos
 
     def write(self, i, j, v):
         """À COMPLÉTER!
@@ -123,8 +127,8 @@ class SudokuGrid:
         :param j: Numéro de colonne de la case à mettre à jour, entre 0 et 8
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
-        if self.grid[i][j] == 0 and 1 <= v <= 9 and 0 <= i <= 8 and 0 <= j <= 8:
-            self.grid[i][j] = v
+        if self.sudoku[i][j]==0 and 1<=v and v<=9 and 0 <=i and i<=8 and 0<=j and j<=8:
+            self.sudoku[i][j]=v
             return True
 
     def copy(self):
@@ -135,6 +139,6 @@ class SudokuGrid:
         *Variante avancée: vous pouvez aussi utiliser ``self.__new__(self.__class__)``
         et manuellement initialiser les attributs de la copie.*
         """
-        nouveau_sudoku = self.__new__(self.__class__)
-        nouveau_sudoku.grid = deepcopy(self.grid)
-        return nouveau_sudoku
+        copie = self.__new__(self.__class__)
+        copie.sudoku = deepcopy(self.sudoku)
+        return copie

@@ -31,7 +31,7 @@ class SudokuSolver:
         for i, j in self.grilleSudoku.get_empty_pos():
             if self.grillePossibles[i][j].sum() == 0:
                 return False
-        for i, row in enumerate(self.grilleSudoku.grid):
+        for i, row in enumerate(self.grilleSudoku.sudoku):
             for j, case in enumerate(row):
                 if case > 0:
                     if np.count_nonzero(self.grilleSudoku.get_row(i) == case)>1:
@@ -138,7 +138,6 @@ class SudokuSolver:
         sur chaque ligne, chaque colonne et dans chaque région*
         """
         commitReussi = True
-        last_modification = 1
         while commitReussi==True:  # il n'y avait pas de cases avec une seule possibilité
             last_modification = self.commit_one_var()  # *last_pos)
             if last_modification is not None:
@@ -164,17 +163,17 @@ class SudokuSolver:
         """
 
         solutions = []
-        for y, x in self.grilleSudoku.get_empty_pos():
-            pos_sols = np.unique(self.grillePossibles[y][x])
+        for i, j in self.grilleSudoku.get_empty_pos():
+            pos_sols = np.unique(self.grillePossibles[i][j])
             if len(pos_sols) != 1:
-                solutions.append((y, x, pos_sols))
+                solutions.append((i,j,pos_sols))
 
         sudokuSolvers = []
-        y, x, solutionsUtilisees = solutions[0]
+        i, j, solutionsUtilisees = solutions[0]
         for solutionCase in solutionsUtilisees:
             if solutionCase != 0:
                 nouvelleGrille = self.grilleSudoku.copy()
-                nouvelleGrille.grid[y][x] = solutionCase
+                nouvelleGrille.sudoku[i][j] = solutionCase
                 nouveauSolver = SudokuSolver(nouvelleGrille)
                 sudokuSolvers.append(nouveauSolver)
         return sudokuSolvers
