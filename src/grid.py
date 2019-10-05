@@ -1,101 +1,11 @@
-# -*-coding: utf8-*-
 import itertools
-import sys
 from copy import deepcopy
-from typing import List, Iterable
 import numpy as np
-
-
-class Grid2D:
-    """
-    Structure de données utilisée pour stocker les possiblitées
-    array 3 dimensions
-    dans la dernière dimension, si l'élément est > 0 c'est une des solutions possibles
-
-    Quand une case est remplie dans le sudoku, il ne faut plus la regarder dans la grille des possiblités
-    """
-    list2d: List[List] = None
-    length: int = 9
-
-    def __init__(self, list2d=None, length=9, default=0):
-        self.length = length
-        if list2d is None:
-            self.list2d = np.zeros(729, dtype=np.uint8).reshape(9, 9, 9)
-        else:
-            self.list2d = list2d
-
-    def __getitem__(self, item):  # pour accéder à la liste avec [y][x] sans passer par l'attribut list2d
-        return self.list2d.__getitem__(item)
-
-    # def __setitem__(self, key, value):  # pareil mais pour écrire
-    #     return self.list2d.__setitem__(key, value)
-
-    def __len__(self):
-        return self.list2d.__len__()
-
-    def get_row(self, i) -> List[int]:
-        return self.list2d[i]
-
-    def get_col(self, j) -> List[int]:
-        return self.list2d[:, j]
-
-    def get_region(self, reg_row, reg_col, region_size=3) -> List[int]:
-        return self.list2d[3 * reg_row:3 * (reg_row + 1), 3 * reg_col:3 * (reg_col + 1)].flatten()
-
-    def _check_list2d(self):
-        assert len(self.list2d) == self.length, "Liste trop grande"
-        for row in self.list2d:
-            assert len(row) == self.length
-
-    def report_same_type(self):
-        """
-        Regarde si tous les éléments ont le même type
-        """
-        e_type = type(self.list2d[0][0])
-        for row in self.list2d:
-            for elem in self.list2d:
-                assert type(elem) == e_type, "Types are different"
-
-    def __str__(self):
-        s = []
-        a = list(itertools.chain(*self.list2d))
-        b = [str(e) for e in a]
-        c = [len(e) for e in b]
-        largest_elem = max(c)
-        # largest_elem = len(max((str(e) for e in itertools.chain(*self.list2d))))
-        for y, row in enumerate(self.list2d):
-            s.append((1 + self.length * (largest_elem + 1)) * "-")
-            s.append("\n|")
-            for x, elem in enumerate(row):
-                #    print(largest_elem-len(str(elem)))
-                #    print(str(elem))
-                #    print(len(str(elem)))
-                s.append(str(elem) + " " * (largest_elem - len(str(elem))) + "|")
-            s.append("\n")
-        s.append((1 + self.length * (largest_elem + 1)) * "-")
-        return "".join(s)
-
-    def get_row_except(self, row: int, col: int) -> Iterable[int]:
-        """ Renvoie tout la ligne sauf l'élément à l'intersection de la colonne donnée"""
-        return np.delete(self.list2d, col, axis=1)[row].flatten()
-
-    def get_col_except(self, col: int, row: int) -> Iterable[int]:
-        try:
-            return np.delete(self.list2d, row, axis=0)[:, col].flatten()
-        except IndexError as e:
-            print(col, " ",row)
-            raise e
-
-    def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int) -> Iterable[int]:
-        return np.delete(self.get_region(reg_row, reg_col), 3 * row + col)
-
 
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
     Toutes ces méthodes sont à compléter en vous basant sur la documentation fournie en docstring.
     """
-    grid: np.ndarray
-
     @classmethod
     def from_file(cls, filename, line):
         """À COMPLÉTER!
@@ -111,17 +21,9 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée dans le fichier donné
         :rtype: SudokuGrid
         """
-        # with open(filename, 'r') as f:
-        #    line_str = list(f.readlines()[line].rstrip("\n"))
-        # f.close() #pas utilisé ici
-        line_f = None
-        with open(filename, 'r') as f:
-            l_n = 0
-            while l_n < line:
-                f.readline()
-                l_n += 1
-            line_f = f.readline().rstrip()
-        return cls(line_f)
+        with open(filename, 'r') as fichier:
+            ligne_sudoku = fichier.readlines()[line].rstrip("\n")
+            return cls(ligne_sudoku)
 
     @classmethod
     def from_stdin(cls):
@@ -132,8 +34,7 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée par l'utilisateur
         :rtype: SudokuGrid
         """
-        return cls(input())
-        raise NotImplementedError()
+        return cls(input(""))
 
     def __init__(self, initial_values_str):
         """
@@ -144,10 +45,8 @@ class SudokuGrid:
             où ``0`` indique une case vide
         :type initial_values_str: str
         """
-        try:
-            assert len(initial_values_str) == 81, "Entrée non valide (!=81)"
-        except AssertionError:
-            raise ValueError("entrée doit être de longueur 81")
+        if len(initial_values_str) != 81:
+            raise ValueError
         initial_values_list = list(initial_values_str)
         self.grid = np.zeros(shape=(9, 9), dtype=np.uint8)
         initial_values_list.reverse()
@@ -161,19 +60,12 @@ class SudokuGrid:
         :return: Une chaîne de caractère (sur plusieurs lignes...) représentant la grille
         :rtype: str
         """
-        s = []
-        for l in range(0, 9):
-            s.append("─" * 37)
-            s.append("\n║ ")
-            for c in range(0, 8):
-                s.append(str(self.grid[l][c]))
-                if (c + 1) % 3 == 0:
-                    s.append(" ║ ")
-                else:
-                    s.append(" │ ")
-            s.append(str(self.grid[l][8]) + " ║\n")
-        s.append("─" * 37)
-        return "".join(s)
+        string = ""
+        for i in range(0,len(self.grid)):
+            for j in range(0, len(self.grid[i])):
+                string = string + str(self.grid[i][j])
+            string = string + "\n"
+        return string
 
     def get_row(self, i):
         """À COMPLÉTER!
@@ -186,7 +78,7 @@ class SudokuGrid:
         """
         return self.grid[i]
 
-    def get_col(self, j) -> List[int]:
+    def get_col(self, j):
         """À COMPLÉTER!
         Cette méthode extrait une colonne donnée de la grille de Sudoku.
         *Variante avancée: Renvoyez un générateur sur les valeurs au lieu d'une liste*
@@ -209,7 +101,6 @@ class SudokuGrid:
         :rtype: list of int
         """
         return self.grid[3 * reg_row:3 * (reg_row + 1), 3 * reg_col:3 * (reg_col + 1)].flatten()
-        # return [self.grid[3 * reg_row + i][3 * reg_col + j] for i in range(0, 3) for j in range(0, 3)]
 
     def get_empty_pos(self):
         """À COMPLÉTER!
@@ -219,9 +110,9 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of tuple of int
         """
-        return ((y, x) for y in range(0, 9) for x in range(0, 9) if self.grid[y][x] == 0)
+        return [(y, x) for y in range(0, 9) for x in range(0, 9) if self.grid[y][x] == 0]
 
-    def write(self, i, j, v, force=False):
+    def write(self, i, j, v):
         """À COMPLÉTER!
         Cette méthode écrit la valeur ``v`` dans la case ``(i,j)`` de la grille de Sudoku.
         *Variante avancée: Levez une exception si ``i``, ``j`` ou ``v``
@@ -232,10 +123,9 @@ class SudokuGrid:
         :param j: Numéro de colonne de la case à mettre à jour, entre 0 et 8
         :param v: Valeur à écrire dans la case ``(i,j)``, entre 1 et 9
         """
-        if 1 <= v <= 9 and 0 <= i <= 8 and 0 <= j <= 8 and (self.grid[i][j] == 0 or force):
+        if self.grid[i][j] == 0 and 1 <= v <= 9 and 0 <= i <= 8 and 0 <= j <= 8:
             self.grid[i][j] = v
             return True
-        raise UserWarning("erreur sur i,j ou v")
 
     def copy(self):
         """À COMPLÉTER!
@@ -245,15 +135,6 @@ class SudokuGrid:
         *Variante avancée: vous pouvez aussi utiliser ``self.__new__(self.__class__)``
         et manuellement initialiser les attributs de la copie.*
         """
-        s = self.__new__(self.__class__)
-        s.grid = deepcopy(self.grid)  # oui autant ne pas tout copier à la main
-        return s
-
-    def __getitem__(self, item):
-        return self.grid.__getitem__(item)
-
-    def get_item(self, row, col):
-        return self.grid[row][col]
-
-    def __setitem__(self, key, value):
-        return self.grid.__setitem__(key, value)
+        nouveau_sudoku = self.__new__(self.__class__)
+        nouveau_sudoku.grid = deepcopy(self.grid)
+        return nouveau_sudoku

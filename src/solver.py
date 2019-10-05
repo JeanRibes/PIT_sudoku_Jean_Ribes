@@ -1,29 +1,12 @@
-# -*-coding: utf8-*-
-import itertools
-
 import numpy as np
 
-from grid import SudokuGrid, Grid2D
-
-daemon_running = True
-
-
-def list_possible_solutions(liste: list):
-    # possible_solutions = list(range(1, 10))
-    # for i in range(1, 10):  # il faut bien aller jusqu'à 10 pour inclure 9
-    #    if i in liste:
-    #        possible_solutions.remove(i)
-    return set(range(1, 10)) - set(liste)
-    # return possible_solutions
+from grid import SudokuGrid
 
 
 class SudokuSolver:
     """Cette classe permet d'explorer les solutions d'une grille de Sudoku pour la résoudre.
     Elle fait intervenir des notions de programmation par contraintes
     que vous n'avez pas à maîtriser pour ce projet."""
-
-    sudokugrid: SudokuGrid = None  # contient le sudoku avec des 0 aux endroits non résolus
-    possible_values_grid: Grid2D = None  # contient des {sets} de solutions possibles
 
     def __init__(self, grid):
         """À COMPLÉTER
@@ -33,8 +16,8 @@ class SudokuSolver:
         :param grid: Une grille de Sudoku
         :type grid: SudokuGrid
         """
-        self.sudokugrid = grid
-        self.possible_values_grid = Grid2D()
+        self.grilleSudoku = grid
+        self.grillePossibles = np.zeros(729, dtype=np.uint8).reshape(9, 9, 9)
         self.reduce_all_domains()
 
     def is_valid(self):
@@ -45,24 +28,17 @@ class SudokuSolver:
         :rtype: bool
         """
         self.reduce_all_domains()  # MaJ des solutions possibles
-        for y, x in self.sudokugrid.get_empty_pos():
-            if self.possible_values_grid[y][
-                x].sum() == 0:  # aucun des éléments n'est supérieur à 0, donc il n'y a plus de solutions possibles
+        for i, j in self.grilleSudoku.get_empty_pos():
+            if self.grillePossibles[i][j].sum() == 0:
                 return False
-        for y, row in enumerate(self.sudokugrid.grid):
-            for x, elem in enumerate(row):
-                if elem > 0:
-                    if np.count_nonzero(self.sudokugrid.get_row(y) == elem) > 1:
-                        print(".", end='')
-                        #            print("Une valeur apparait plus d'une'fois dans sa ligne")
+        for i, row in enumerate(self.grilleSudoku.grid):
+            for j, case in enumerate(row):
+                if case > 0:
+                    if np.count_nonzero(self.grilleSudoku.get_row(i) == case)>1:
                         return False
-                    if np.count_nonzero(self.sudokugrid.get_col(x) == elem) > 1:
-                        print(".", end='')
-                        #           print("Une valeur apparait plus d'une fois dans sa colonne")
+                    if np.count_nonzero(self.grilleSudoku.get_col(j) == case)>1:
                         return False
-                    if np.count_nonzero(self.sudokugrid.get_region(y // 3, x // 3) == elem) > 1:
-                        #            print("une valeur apparait plsu d'une fois dans son carré")
-                        print(".", end='')
+                    if np.count_nonzero(self.grilleSudoku.get_region(i // 3, j // 3) == case)>1:
                         return False
         return True
 
@@ -73,40 +49,28 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution actuelle est complète.
         :rtype: bool
         """
-        for y in range(0, 3):  # il n'y a pas exactement 9 chiffres uniques dans un carré
-            for x in range(0, 3):  # carré 3x3
-                if sum(self.sudokugrid.get_region(y,
-                                                  x)) != 45:  # regarder si faire la somme des 9 éléments est + rapide
+        for i in range(0, 3):
+            for j in range(0, 3):
+                if sum(self.grilleSudoku.get_region(i,j))!=45:
                     return False
-        for y in range(0, 9):  # il n'y a pas exactement 9 chiffre uniques dans une ligne
-            if sum(self.sudokugrid.get_row(y)) != 45:
+        for i in range(0, 9):
+            if sum(self.grilleSudoku.get_row(i))!=45:
                 return False
-        for x in range(0, 9):  # ... dans une colonnes
-            if sum(self.sudokugrid.get_col(x)) != 45:
+        for j in range(0, 9):
+            if sum(self.grilleSudoku.get_col(j)) != 45:
                 return False
         return True
 
-    def reduce_all_domains(self, auto_complete=True):
+    def reduce_all_domains(self):
         """À COMPLÉTER
         Cette méthode devrait être appelée à l'initialisation
         et élimine toutes les valeurs impossibles pour chaque case vide.
         *Indication: Vous pouvez utiliser les fonction ``get_row``, ``get_col`` et ``get_region`` de la grille*
         """
-        for y, x in self.sudokugrid.get_empty_pos():
-            local_others = np.concatenate(
-                (self.sudokugrid.get_row(y),
-                 self.sudokugrid.get_col(x),
-                 self.sudokugrid.get_region(y // 3, x // 3)
-                 )
-            )  # carré actuel
-            possible_values_set = np.unique(np.setdiff1d(np.arange(1, 10), local_others))  # on le transforme en set
-
-            if 0 in possible_values_set:
-                print("grosse errueur ! 0 dans reduce_all_domains")
-                raise UserWarning
-            np.copyto(self.possible_values_grid.list2d[y][x][:len(possible_values_set)],
-                      possible_values_set.astype(np.uint8))
-        return self.possible_values_grid
+        for i, j in self.grilleSudoku.get_empty_pos():
+            valeursUniquesCase = np.unique(np.setdiff1d(np.arange(1, 10), np.concatenate((self.grilleSudoku.get_row(i), self.grilleSudoku.get_col(j), self.grilleSudoku.get_region(i // 3, j // 3)))))
+            np.copyto(self.grillePossibles[i][j][:len(valeursUniquesCase)],valeursUniquesCase.astype(np.uint8))
+        return self.grillePossibles
 
     def reduce_domains(self, last_i, last_j, last_v):
         """À COMPLÉTER
@@ -120,15 +84,11 @@ class SudokuSolver:
         :type last_j: int
         :type last_v: int
         """
-        self.possible_values_grid.get_row(last_i)[np.where(self.possible_values_grid.get_row(last_i) == last_v)] = 0
-        self.possible_values_grid.list2d[:, last_j][np.where(self.possible_values_grid.list2d[:, last_j] == last_v)] = 0
-        self.possible_values_grid.list2d[3 * (last_i // 3):3 * ((last_i // 3) + 1),
-        3 * (last_j // 3):3 * ((last_j // 3) + 1)][np.where(
-            self.possible_values_grid.list2d[3 * (last_i // 3):3 * ((last_i // 3) + 1),
-            3 * (last_j // 3):3 * ((last_j // 3) + 1)] == last_v
-        )] = 0
+        self.grillePossibles[last_i][np.where(self.grillePossibles[last_i] == last_v)]=0
+        self.grillePossibles[:,last_j][np.where(self.grillePossibles[:, last_j] ==last_v)] =0
+        self.grillePossibles[3 * (last_i // 3):3 *((last_i // 3) + 1),3 * (last_j // 3):3* ((last_j // 3) + 1)][np.where(self.grillePossibles[3 * (last_i//3):3*((last_i//3)+1),3 * (last_j // 3):3*((last_j//3)+1)]==last_v)]=0
 
-    def commit_one_var(self, last_y=0, last_x=0):
+    def commit_one_var(self):
         """À compléter
         Cette méthode cherche une case pour laquelle il n'y a plus qu'une seule possibilité.
         Si elle en trouve une, elle écrit cette unique valeur possible dans la grille
@@ -137,33 +97,34 @@ class SudokuSolver:
         ou ``None`` si aucune case n'a pu être remplie.
         :rtype: tuple of int or None
         """
-        for y, x in self.sudokugrid.get_empty_pos():
-            possible_solutions = np.unique(self.possible_values_grid.list2d[y][x])
-            if possible_solutions.shape == (2,):
-                only_solution = possible_solutions[1]
-                if only_solution != 0:
-                    self.save_solution_entry(y, x, only_solution)
-                    return y, x, only_solution
-            elementsH = np.unique(self.possible_values_grid.get_row_except(y, x))
-            elementsV = np.unique(self.possible_values_grid.get_col_except(x, y))
-            elementsSquare = np.unique(self.possible_values_grid.get_region_except(y // 3, x // 3, y, x))
-            for n in possible_solutions:  # int
-                if n > 0:
-                    if len(elementsV) > 1:
-                        if n not in elementsV and n not in self.sudokugrid.get_col(x):
-                            #                print("V{} at ({},{})".format(n, y, x))
-                            self.save_solution_entry(y, x, n)
-                            return y, x, n
-                    if len(elementsH) > 1:
-                        if n not in elementsH and n not in self.sudokugrid.get_row(y):
-                            #               print("H{} at ({},{})".format(n, y, x))
-                            self.save_solution_entry(y, x, n)
-                            return y, x, n
-                    if len(elementsSquare) > 1:
-                        if n not in elementsSquare and n not in self.sudokugrid.get_row(y):
-                            #               print("Sq{} at ({},{})".format(n, y, x))
-                            self.save_solution_entry(y, x, n)
-                            return y, x, n
+        for i, j in self.grilleSudoku.get_empty_pos():
+            solutionsCase = np.unique(self.grillePossibles[i][j])
+            if solutionsCase.shape == (2,):
+                solUnique=solutionsCase[1]
+                if solUnique != 0:
+                    if self.grilleSudoku.write(i, j, solUnique) == True:
+                        self.grillePossibles[i][j] = np.zeros(9, dtype=np.uint8)
+                    return i, j, solUnique
+            autrerowsCase = np.delete(self.grillePossibles, j, axis=1)[i].flatten()
+            autreColsCase = np.delete(self.grillePossibles, i, axis=0)[:, j].flatten()
+            autresRegionCase = np.delete(self.grillePossibles[3 * (i//3):3 * (i//3 + 1), 3 * (j//3):3 * (j//3 + 1)].flatten(), 3 * i + j)
+            for sol in solutionsCase:
+                if sol != 0:
+                    if len(autreColsCase) > 1:
+                        if sol not in autreColsCase and sol not in self.grilleSudoku.get_col(j):
+                            if self.grilleSudoku.write(i,j,sol) == True:
+                                self.grillePossibles[i][j] = np.zeros(9, dtype=np.uint8)
+                            return i, j,sol
+                    if len(autrerowsCase) > 1:
+                        if sol not in autrerowsCase and sol not in self.grilleSudoku.get_row(i):
+                            if self.grilleSudoku.write(i,j,sol)==True:
+                                self.grillePossibles[i][j] = np.zeros(9, dtype=np.uint8)
+                            return i,j, sol
+                    if len(autresRegionCase) > 1:
+                        if sol not in autresRegionCase and sol not in self.grilleSudoku.get_row(i):
+                            if self.grilleSudoku.write(i,j,sol)==True:
+                                self.grillePossibles[i][j]=np.zeros(9, dtype=np.uint8)
+                            return i,j,sol
         return None
 
     def solve_step(self):
@@ -176,22 +137,17 @@ class SudokuSolver:
         il est aussi possible de vérifier s'il ne reste plus qu'une seule position valide pour une certaine valeur
         sur chaque ligne, chaque colonne et dans chaque région*
         """
-        # last_pos = (0, 0)  # sert à ne pas itérer la grille en entier à chaque fois
+        commitReussi = True
         last_modification = 1
-        while last_modification is not None:  # il n'y avait pas de cases avec une seule possibilité
-            # en fait is_valid ne vérifie pas s'il reste des possibilités
+        while commitReussi==True:  # il n'y avait pas de cases avec une seule possibilité
             last_modification = self.commit_one_var()  # *last_pos)
             if last_modification is not None:
-                self.reduce_domains(*last_modification)  # on unpack la position & valeur
-                # last_pos = (last_modification[0], last_modification[1])
+                commitReussi=True
             else:
-                # if last_pos != (0, 0):  # si l'itération commence à la fin de la grille et ne trouve rien
-                #    last_pos = (0, 0)  # elle doit pouvoir revenir au début
-                #    continue
-                #            print("arrêt de la résolution simple")
-                return  # il n'est plus possible de trouver une unique solution "simple"
-        #    print("Sudoku invalide")
-        # self.reduce_all_domains()
+                commitReussi=False
+            if commitReussi==True:
+                i,j,v=last_modification
+                self.reduce_domains(i,j,v)  # on unpack la position & valeur
 
     def branch(self):
         """À COMPLÉTER
@@ -208,30 +164,22 @@ class SudokuSolver:
         """
 
         solutions = []
-        for y, x in self.sudokugrid.get_empty_pos():
-            pos_sols = np.unique(self.possible_values_grid.list2d[y][x])
+        for y, x in self.grilleSudoku.get_empty_pos():
+            pos_sols = np.unique(self.grillePossibles[y][x])
             if len(pos_sols) != 1:
                 solutions.append((y, x, pos_sols))
-        # for y, row in enumerate(self.possible_values_grid):
-        #    for x, possible_solutions in enumerate(row):
-        #        if possible_solutions != {0}:
-        #            solutions.append((y, x, possible_solutions))
-        solutions.sort(key=lambda elem: len(elem[2]))  # on trie les tuples par 3e élément (nombre de solutions)
 
-        solvers = []
-        y, x, selected_solutions = solutions[0]
-        for selected_solution in selected_solutions:
-            if selected_solution != 0:
-                new_grid = self.sudokugrid.copy()
-                new_grid[y][x] = selected_solution
-                new_solver = SudokuSolver(new_grid)
-                solvers.append(new_solver)
-                # if selected_solution == 0:
-                #    raise UserWarning("0 trouvé comme solution possible !")
-        print("\rbranch: {} cas".format(len(solvers)), end='')
-        return solvers
+        sudokuSolvers = []
+        y, x, solutionsUtilisees = solutions[0]
+        for solutionCase in solutionsUtilisees:
+            if solutionCase != 0:
+                nouvelleGrille = self.grilleSudoku.copy()
+                nouvelleGrille.grid[y][x] = solutionCase
+                nouveauSolver = SudokuSolver(nouvelleGrille)
+                sudokuSolvers.append(nouveauSolver)
+        return sudokuSolvers
 
-    def solve(self, update_f=None):
+    def solve(self):
         """
         Cette méthode implémente la fonction principale de la programmation par contrainte.
         Elle cherche d'abord à affiner au mieux la solution partielle actuelle par un appel à ``solve_step``.
@@ -244,27 +192,13 @@ class SudokuSolver:
         (ou None si pas de solution)
         :rtype: SudokuGrid or None
         """
-        # if not daemon_running:
-        #    return
         self.solve_step()
         if self.is_solved():
-            return self.sudokugrid
+            return self.grilleSudoku
+        elif self.is_valid():
+            for brancheSolveur in self.branch():
+                return brancheSolveur.solve()
         else:
-            if self.is_valid():
-                for solver in self.branch():
-                    #  if update_f is not None:
-                    #      update_f(solver.sudokugrid)
-                    #      time.sleep(1)
-                    s2 = solver.solve(update_f)
-                    if s2 is not None:
-                        return s2
-                # return None # je pense que ça ne sert à rien
-            else:
-                return None
+            return None
 
-    def save_solution_entry(self, y, x, v):
-        #print("(y={},x={}):=>{}".format(y, x, v))
-        if self.sudokugrid.write(y, x, v):
-            self.possible_values_grid.list2d[y][x] = np.zeros(9, dtype=np.uint8)
-        else:
-            print("erreur d'enregristrement pour ({},{})={}".format(y, x, v))
+

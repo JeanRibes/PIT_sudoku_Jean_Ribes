@@ -7,14 +7,14 @@ import multiprocessing
 
 
 def solve_all(running_times):
-    for l in range(1,244):
+    for l in range(0,244):
         g = SudokuGrid.from_file("sudoku_db.txt", l)
         start = time.monotonic()
         solver = SudokuSolver(g)
         solver.solve()
         running_times.append(1000*(time.monotonic() - start))
         print("\r[{: <40}] ({:.0%})".format('='*int(40*l/244), l/244), end='')
-        #time.sleep(1)
+        time.sleep(1)
 
 
 if __name__ == "__main__":

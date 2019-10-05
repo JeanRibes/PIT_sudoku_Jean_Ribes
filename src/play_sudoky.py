@@ -16,12 +16,12 @@ if __name__ == '__main__':
     solver = SudokuSolver(sudoku)
     cheat = False
     while (not solver.is_solved()) or cheat:
-        print(solver.sudokugrid)
+        print(solver.grilleSudoku)
         x = input("Position x [0-8]: ")
         y = input("Position y [0-8]: ")
         n = input("Valeur [1-9]: ")
         if x == "cheat":
-            solver.sudokugrid = solver.solve()
+            solver.grilleSudoku = solver.solve()
             cheat = True
             print("Cheating...")
             continue
@@ -33,4 +33,4 @@ if __name__ == '__main__':
             print(" * Erreur ! *")
             print(e.args[0])
     print("Bravo !")
-    print(solver.sudokugrid)
+    print(solver.grilleSudoku)
