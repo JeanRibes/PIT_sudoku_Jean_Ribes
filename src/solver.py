@@ -1,5 +1,7 @@
 # -*-coding: utf8-*-
 import itertools
+from multiprocessing import Pipe, Process, connection, Value, Pool
+from multiprocessing.connection import Connection
 
 from grid import SudokuGrid, Grid2D
 
@@ -207,7 +209,7 @@ class SudokuSolver:
         #    print("Sudoku invalide")
         # self.reduce_all_domains()
 
-    def branch(self):
+    def branch(self, over_branching=1):
         """À COMPLÉTER
         Cette méthode sélectionne une variable libre dans la solution partielle actuelle,
         et crée autant de sous-problèmes que d'affectation possible pour cette variable.
@@ -226,10 +228,6 @@ class SudokuSolver:
             pos_sols = self.possible_values_grid.list2d[y][x]
             if pos_sols != {0}:
                 solutions.append((y, x, pos_sols))
-        # for y, row in enumerate(self.possible_values_grid):
-        #    for x, possible_solutions in enumerate(row):
-        #        if possible_solutions != {0}:
-        #            solutions.append((y, x, possible_solutions))
         solutions.sort(key=lambda elem: len(elem[2]))  # on trie les tuples par 3e élément (nombre de solutions)
 
         solvers = []
@@ -239,12 +237,9 @@ class SudokuSolver:
             new_grid[y][x] = selected_solution
             new_solver = SudokuSolver(new_grid)
             solvers.append(new_solver)
-            # if selected_solution == 0:
-            #    raise UserWarning("0 trouvé comme solution possible !")
-        print("\rbranch: {} cas".format(len(solvers)), end="                         ")
         return solvers
 
-    def solve(self, update_f=None):
+    def solve(self):
         """
         Cette méthode implémente la fonction principale de la programmation par contrainte.
         Elle cherche d'abord à affiner au mieux la solution partielle actuelle par un appel à ``solve_step``.
@@ -264,20 +259,34 @@ class SudokuSolver:
             return self.sudokugrid
         else:
             if self.is_valid():
-                solvers = self.branch()
-                for solver in solvers:
-                    #  if update_f is not None:
-                    #      update_f(solver.sudokugrid)
-                    #      time.sleep(1)
-                    a = 1
-                    s2 = solver.solve(update_f)
-                    if s2 is not None:
-                        return s2
-                # return None # je pense que ça ne sert à rien
+                for solver in self.branch():
+                    result = solver.solve()
+                    if result is not None:
+                        return result
+                return None
             else:
-                a = 1
                 return None
 
     def save_solution_entry(self, y, x, v):
         if self.sudokugrid.write(y, x, v):
             self.possible_values_grid.list2d[y][x] = {0}
+
+    def forksolve(this):
+        def run(self, tube: Connection, unfinished: Value):
+            self.solve_step()
+            # if not unfinished.value:
+            #    print("fini")
+            if self.is_solved():
+                # print("solved")
+                unfinished.value = False
+                tube.send(self.sudokugrid)  # " return "
+            else:
+                if self.is_valid() and unfinished.value:
+                    solvers = self.branch()
+                    for solver in solvers:
+                        Process(target=run, args=(solver, tube, unfinished)).start()
+        # print("start")
+        sortie, multi_solvers = Pipe()
+        unfinished = Value('b', True)
+        run(this, multi_solvers, unfinished)
+        return sortie.recv()

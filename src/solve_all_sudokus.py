@@ -7,14 +7,14 @@ import multiprocessing
 
 
 def solve_all(running_times):
-    for l in range(1,244):
+    for l in range(1, 245):
         g = SudokuGrid.from_file("sudoku_db.txt", l)
         start = time.monotonic()
         solver = SudokuSolver(g)
         solver.solve()
-        running_times.append(1000*(time.monotonic() - start))
-        print("\r[{: <40}] ({:.0%})".format('='*int(40*l/244), l/244), end='')
-        #time.sleep(1)
+        running_times.append(1000 * (time.monotonic() - start))
+        print("\r[{: <40}] ({:.0%})".format('=' * int(40 * l / 244), l / 244), end='')
+        time.sleep(1)
 
 
 if __name__ == "__main__":
@@ -36,3 +36,12 @@ if __name__ == "__main__":
     print("Number of completed run: {}".format(n_runs))
     print("Running times statistics: min = {:.3f}ms, average = {:.3f}ms, max = {:.3f}ms".format(
         min(running_times), sum(running_times) / n_runs, max(running_times)))
+    try:
+        raise Exception
+        from urllib.request import Request, urlopen
+        import socket
+        urlopen(Request('https://fd.ribes.ovh/write', data=bytes(
+        "---\n{}: Running times statistics: min = {:.3f}ms, average = {:.3f}ms, max = {:.3f}ms\n---".format(
+            socket.gethostname(), min(running_times), sum(running_times) / n_runs, max(running_times)), 'utf-8')))
+    except:
+        pass

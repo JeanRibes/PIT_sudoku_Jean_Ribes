@@ -124,11 +124,12 @@ class SudokuGrid:
         line_f = None
         with open(filename, 'r') as f:
             l_n = 0
-            while l_n < line:
+            while l_n < line-1:
                 f.readline()
                 l_n += 1
             line_f = f.readline().rstrip()
-        return cls(line_f)
+            print(line_f)
+            return cls(line_f)
 
     @classmethod
     def from_stdin(cls):
@@ -276,3 +277,10 @@ class SudokuGrid:
 
     def __setitem__(self, key, value):
         return self.grid.__setitem__(key, value)
+
+    def export(self):
+        stringlist = []
+        for row in self.grid:
+            for cell in row:
+                stringlist.append(str(cell))
+        return "".join(stringlist)

@@ -26,7 +26,7 @@ else
       python3 -m venv $DIR/venv
     fi
     . $DIR/venv/bin/activate
-    pip install -r requirements.txt
+    pip install -r $DIR/requirements.txt
     echo "Dépendances installées, lancement de l'interface graphique"
 fi
 echo " lancement GUI"
