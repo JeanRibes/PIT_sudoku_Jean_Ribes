@@ -1,20 +1,14 @@
 # -*-coding: utf8-*-
-import itertools
-from multiprocessing import Pipe, Process, connection, Value, Pool
-from multiprocessing.connection import Connection
-
 from grid import SudokuGrid, Grid2D
 
-daemon_running = True
 
-
-def list_possible_solutions(liste: list):
+def list_possible_solutions(liste: list)->set:
     # possible_solutions = list(range(1, 10))
     # for i in range(1, 10):  # il faut bien aller jusqu'à 10 pour inclure 9
     #    if i in liste:
     #        possible_solutions.remove(i)
-    return set(range(1, 10)) - set(liste)
     # return possible_solutions
+    return set(range(1, 10)) - set(liste)  # plus logique quand on utilise des sets
 
 
 class SudokuSolver:
@@ -44,28 +38,28 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution partielle actuelle peut encore mener à une solution valide
         :rtype: bool
         """
-        self.reduce_all_domains()  # MaJ des solutions possibles
         for row in self.possible_values_grid.list2d:
             for elem in row:
                 if elem is not None:
                     if len(elem) < 1:
                         return False
-        for y, row in enumerate(self.sudokugrid.grid):
-            for x, elem in enumerate(row):
-                if elem > 0:
-                    if self.sudokugrid.get_row(y).count(elem) > 1:
-                        print(".", end='')
-                        #            print("Une valeur apparait plus d'une'fois dans sa ligne")
-                        return False
-                    if self.sudokugrid.get_col(x).count(elem) > 1:
-                        print(".", end='')
-                        #           print("Une valeur apparait plus d'une fois dans sa colonne")
-                        return False
-                    if self.sudokugrid.get_region(y // 3, x // 3).count(elem) > 1:
-                        #            print("une valeur apparait plsu d'une fois dans son carré")
-                        print(".", end='')
-                        return False
         return True
+        # pas nécessaire quand le reste du solveur marche bien, mais utile pour commencer
+        # for y, row in enumerate(self.sudokugrid.grid):
+        #    for x, elem in enumerate(row):
+        #        if elem > 0:
+        #            if self.sudokugrid.get_row(y).count(elem) > 1:
+        #                print(".", end='')
+        #                #            print("Une valeur apparait plus d'une'fois dans sa ligne")
+        #                return False
+        #            if self.sudokugrid.get_col(x).count(elem) > 1:
+        #                print(".", end='')
+        #                #           print("Une valeur apparait plus d'une fois dans sa colonne")
+        #                return False
+        #            if self.sudokugrid.get_region(y // 3, x // 3).count(elem) > 1:
+        #                #            print("une valeur apparait plsu d'une fois dans son carré")
+        #                print(".", end='')
+        #                return False
 
     def is_solved(self):
         """À COMPLÉTER
@@ -74,18 +68,18 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution actuelle est complète.
         :rtype: bool
         """
-        for y in range(0, 3):  # il n'y a pas exactement 9 chiffres uniques dans un carré
-            for x in range(0, 3):  # carré 3x3
-                if sum(self.sudokugrid.get_region(y,
-                                                  x)) != 45:  # regarder si faire la somme des 9 éléments est + rapide
-                    return False
-        for y in range(0, 9):  # il n'y a pas exactement 9 chiffre uniques dans une ligne
-            if sum(self.sudokugrid.get_row(y)) != 45:
-                return False
-        for x in range(0, 9):  # ... dans une colonnes
-            if sum(self.sudokugrid.get_col(x)) != 45:
-                return False
-        return True
+        return len(list(self.sudokugrid.get_empty_pos())) == 0  # plus rapide
+
+        # plus compréhensible
+        # for y in range(0, 3):  # il n'y a pas exactement 9 chiffres uniques dans un carré
+        #    for x in range(0, 3):  # carré 3x3
+        #        if sum(self.sudokugrid.get_region(y,x)) != 45:  # regarder si faire la somme des 9 éléments est + rapide
+        #            return False
+        # for y in range(0, 9):  # il n'y a pas exactement 9 chiffre uniques dans une ligne
+        #    if sum(self.sudokugrid.get_row(y)) != 45:return False
+        # for x in range(0, 9):  # ... dans une colonnes
+        #    if sum(self.sudokugrid.get_col(x)) != 45:return False
+        # return True
 
     def reduce_all_domains(self, auto_complete=True):
         """À COMPLÉTER
@@ -97,14 +91,8 @@ class SudokuSolver:
             local_others = self.sudokugrid.get_row(y) \
                            + self.sudokugrid.get_col(x) \
                            + self.sudokugrid.get_region(y // 3, x // 3)  # carré actuel
-            possible_values = list_possible_solutions(
-                local_others
-            )
-            possible_values_set = set(possible_values)  # on le transforme en set
-            if 0 in possible_values_set:
-                print("grosse errueur ! 0 dans reduce_all_domains")
-                raise UserWarning
-            self.possible_values_grid.list2d[y][x] = possible_values_set
+            possible_values = list_possible_solutions(local_others)
+            self.possible_values_grid.list2d[y][x] = possible_values
         return self.possible_values_grid
 
     def reduce_domains(self, last_i, last_j, last_v):
@@ -154,15 +142,12 @@ class SudokuSolver:
                     self.sudokugrid.write(y, x, only_solution)
                     possible_solutions.add(0)  # la case devient {0}
                     return y, x, only_solution
-            # elementsH, elementsV, elementsSquare = set(), set(), set()
-            # elementsH = reduce(elementsH.union, self.possible_values_grid.get_row_except(y, x))
-            # elementsV = reduce(elementsV.union, self.possible_values_grid.get_col_except(x, y))
-            # elementsSquare = reduce(elementsSquare.union, self.possible_values_grid.get_region(y // 3, x // 3))
             elementsH = set(self.possible_values_grid.get_row_except(y, x))
             elementsV = set(self.possible_values_grid.get_col_except(x, y))
             elementsSquare = set(self.possible_values_grid.get_region_except(y // 3, x // 3, y, x))
             for n in possible_solutions:  # int
-                if len(elementsV) > 1:
+                if len(elementsV) > 1:  # pour ne pas utiliser 0 comme élément, car il apparait forcément dans les
+                                        # solutions (il représente les cases remplies)
                     if n not in elementsV and n not in self.sudokugrid.get_col(x):
                         #                print("V{} at ({},{})".format(n, y, x))
                         self.sudokugrid.write(y, x, n)
@@ -192,24 +177,15 @@ class SudokuSolver:
         il est aussi possible de vérifier s'il ne reste plus qu'une seule position valide pour une certaine valeur
         sur chaque ligne, chaque colonne et dans chaque région*
         """
-        # last_pos = (0, 0)  # sert à ne pas itérer la grille en entier à chaque fois
         last_modification = 1
         while last_modification is not None:  # il n'y avait pas de cases avec une seule possibilité
-            # en fait is_valid ne vérifie pas s'il reste des possibilités
-            last_modification = self.commit_one_var()  # *last_pos)
+            last_modification = self.commit_one_var()
             if last_modification is not None:
                 self.reduce_domains(*last_modification)  # on unpack la position & valeur
-                # last_pos = (last_modification[0], last_modification[1])
             else:
-                # if last_pos != (0, 0):  # si l'itération commence à la fin de la grille et ne trouve rien
-                #    last_pos = (0, 0)  # elle doit pouvoir revenir au début
-                #    continue
-                #            print("arrêt de la résolution simple")
                 return  # il n'est plus possible de trouver une unique solution "simple"
-        #    print("Sudoku invalide")
-        # self.reduce_all_domains()
 
-    def branch(self, over_branching=1):
+    def branch(self):
         """À COMPLÉTER
         Cette méthode sélectionne une variable libre dans la solution partielle actuelle,
         et crée autant de sous-problèmes que d'affectation possible pour cette variable.
@@ -228,10 +204,10 @@ class SudokuSolver:
             pos_sols = self.possible_values_grid.list2d[y][x]
             if pos_sols != {0}:
                 solutions.append((y, x, pos_sols))
-        solutions.sort(key=lambda elem: len(elem[2]))  # on trie les tuples par 3e élément (nombre de solutions)
+        solutions.sort(key=lambda sols: len(sols[2]))  # on trie les tuples par 3e élément (nombre de solutions)
 
         solvers = []
-        y, x, selected_solutions = solutions[0]
+        y, x, selected_solutions = solutions[0]  # on prend le premier choix dans la liste triée
         for selected_solution in selected_solutions:
             new_grid = self.sudokugrid.copy()
             new_grid[y][x] = selected_solution
@@ -272,6 +248,14 @@ class SudokuSolver:
             self.possible_values_grid.list2d[y][x] = {0}
 
     def forksolve(this):
+        """
+        En fait c'est plus lent que sans le multiprocessing, peut-être dû au temps de création
+        d'un nouveau processus python
+        :return:
+        """
+        from multiprocessing import Pipe, Process, Value
+        from multiprocessing.connection import Connection
+
         def run(self, tube: Connection, unfinished: Value):
             self.solve_step()
             # if not unfinished.value:
@@ -285,6 +269,7 @@ class SudokuSolver:
                     solvers = self.branch()
                     for solver in solvers:
                         Process(target=run, args=(solver, tube, unfinished)).start()
+
         # print("start")
         sortie, multi_solvers = Pipe()
         unfinished = Value('b', True)

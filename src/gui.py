@@ -201,10 +201,6 @@ class SudokuWindow(QMainWindow, Ui_MainWindow):
         self.gridEditMode.setCheckState(0)
         self.toggle_edit_mode(0)
         solver.daemon_runnning = False
-        if hasattr(self, 'daemon_sudoku'):
-            self.daemon_sudoku.quit()
-            self.daemon_sudoku.exit(0)
-            self.daemon_sudoku.terminate()
 
         class DaemonSolver(QThread):
             daemon = True

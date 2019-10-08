@@ -1,6 +1,5 @@
 # -*-coding: utf8-*-
 import itertools
-import sys
 from copy import deepcopy
 from typing import List, Iterable
 
@@ -25,8 +24,8 @@ class Grid2D:
     def __getitem__(self, item):  # pour accéder à la liste avec [y][x] sans passer par l'attribut list2d
         return self.list2d.__getitem__(item)
 
-    # def __setitem__(self, key, value):  # pareil mais pour écrire
-    #     return self.list2d.__setitem__(key, value)
+    def __setitem__(self, key, value):  # pareil mais pour écrire
+        return self.list2d.__setitem__(key, value)
 
     def __len__(self):
         return self.list2d.__len__()
@@ -62,7 +61,7 @@ class Grid2D:
         """
         e_type = type(self.list2d[0][0])
         for row in self.list2d:
-            for elem in self.list2d:
+            for elem in row:
                 assert type(elem) == e_type, "Types are different"
 
     def __str__(self):
@@ -93,7 +92,7 @@ class Grid2D:
 
     def get_region_except(self, reg_row: int, reg_col: int, row: int, col: int) -> Iterable[int]:
         return [solution for i in range(0, 3) for j in range(0, 3) if
-                not (3 * reg_row + i == row and 3 * reg_col + j == col) for solution in
+                not (i == row % 3 and j == col % 3) for solution in
                 self.list2d[3 * reg_row + i][3 * reg_col + j]]
 
 
@@ -118,18 +117,12 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée dans le fichier donné
         :rtype: SudokuGrid
         """
-        # with open(filename, 'r') as f:
-        #    line_str = list(f.readlines()[line].rstrip("\n"))
-        # f.close() #pas utilisé ici
-        line_f = None
         with open(filename, 'r') as f:
             l_n = 0
-            while l_n < line-1:
+            while l_n < line - 1: # fait tourner l'itérable fichier jusqu'à la ligne voulue
                 f.readline()
                 l_n += 1
-            line_f = f.readline().rstrip()
-            print(line_f)
-            return cls(line_f)
+            return cls(f.readline().rstrip())
 
     @classmethod
     def from_stdin(cls):
@@ -141,7 +134,6 @@ class SudokuGrid:
         :rtype: SudokuGrid
         """
         return cls(input())
-        raise NotImplementedError()
 
     def __init__(self, initial_values_str):
         """
@@ -157,19 +149,6 @@ class SudokuGrid:
         except AssertionError:
             raise ValueError("entrée doit être de longueur 81")
         initial_values_list = list(initial_values_str)
-        # self.grid = [
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        #    [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-        # ]
         self.grid = Grid2D(default=-1)
         initial_values_list.reverse()
         for y in range(0, 9):
